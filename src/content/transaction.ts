@@ -13,6 +13,7 @@ interface Patch {
 export interface Transaction {
   patches: Patch[];
   url: string;
+  view: 'original' | 'rewritten';
   beforeWords: number;
   afterWords: number;
 }
@@ -130,6 +131,7 @@ export class RewriteSession {
     return {
       patches: this.patches,
       url: this.passage.url,
+      view: 'rewritten',
       beforeWords: wordCount(passageText(this.passage.segments)),
       afterWords: wordCount(
         passageText(
@@ -160,7 +162,10 @@ export function applyRewrite(passage: Passage, output: RewriteOutput): Transacti
 function isCurrent(transaction: Transaction): boolean {
   return (
     location.href === transaction.url &&
-    transaction.patches.every(({ node, after }) => node.isConnected && node.data === after)
+    transaction.patches.every(
+      ({ node, before, after }) =>
+        node.isConnected && node.data === (transaction.view === 'original' ? before : after),
+    )
   );
 }
 
@@ -179,16 +184,32 @@ export function rewrittenRanges(transaction: Transaction): Range[] {
       range.setStart(patch.node, patch.start);
       ranges.set(patch.block, range);
     }
-    range.setEnd(patch.node, patch.after.length - (patch.before.length - patch.end));
+    const end =
+      transaction.view === 'original'
+        ? patch.end
+        : patch.after.length - (patch.before.length - patch.end);
+    range.setEnd(patch.node, end);
   }
   return [...ranges.values()];
 }
 
-export function undoRewrite(transaction: Transaction): void {
+function showVersion(transaction: Transaction, view: Transaction['view']): void {
   if (!isCurrent(transaction)) {
     throw new Error(
       'The page has changed since this rewrite. Reload to recover the original page.',
     );
   }
-  for (const patch of transaction.patches) patch.node.data = patch.before;
+  for (const patch of transaction.patches) {
+    const text = view === 'original' ? patch.before : patch.after;
+    if (patch.node.data !== text) patch.node.data = text;
+  }
+  transaction.view = view;
+}
+
+export function toggleRewrite(transaction: Transaction): void {
+  showVersion(transaction, transaction.view === 'rewritten' ? 'original' : 'rewritten');
+}
+
+export function undoRewrite(transaction: Transaction): void {
+  showVersion(transaction, 'original');
 }

@@ -5,6 +5,7 @@ import {
   applyRewrite,
   RewriteSession,
   rewrittenRanges,
+  toggleRewrite,
   undoRewrite,
 } from '../src/content/transaction';
 
@@ -127,7 +128,7 @@ describe('DOM transactions', () => {
     expect(tail.data).toBe(' Website changed this.');
   });
 
-  test('replaces only the selected substring and restores it exactly', () => {
+  test('switches only the selected substring and keeps its outline on the visible version', () => {
     const p = paragraph('Before: very important words. After.');
     const node = p.firstChild as Text;
     const range = document.createRange();
@@ -136,6 +137,21 @@ describe('DOM transactions', () => {
     const passage = capturePassage(range);
     const transaction = applyRewrite(passage, { segments: [{ id: 's0', text: 'useful words.' }] });
     expect(p.textContent).toBe('Before: useful words. After.');
+    for (let index = 0; index < 3; index += 1) {
+      toggleRewrite(transaction);
+      expect(transaction.view).toBe('original');
+      expect(p.textContent).toBe('Before: very important words. After.');
+      expect(rewrittenRanges(transaction).map((part) => part.toString())).toEqual([
+        'very important words.',
+      ]);
+      toggleRewrite(transaction);
+      expect(transaction.view).toBe('rewritten');
+      expect(p.textContent).toBe('Before: useful words. After.');
+      expect(rewrittenRanges(transaction).map((part) => part.toString())).toEqual([
+        'useful words.',
+      ]);
+      expect(p.firstChild).toBe(node);
+    }
     undoRewrite(transaction);
     expect(p.textContent).toBe('Before: very important words. After.');
   });
@@ -175,6 +191,10 @@ describe('DOM transactions', () => {
         text: replacements.get(segment.text) ?? segment.text,
       })),
     });
+    expect(p.textContent).toBe('Read the documentation and run bun check carefully.');
+    toggleRewrite(transaction);
+    expect(p.outerHTML).toBe(before);
+    toggleRewrite(transaction);
     expect(p.textContent).toBe('Read the documentation and run bun check carefully.');
     expect(p.querySelector('a')).toBe(a);
     expect(a.getAttribute('href')).toBe('/guide');
@@ -267,4 +287,32 @@ describe('DOM transactions', () => {
     expect(() => undoRewrite(transaction)).toThrow('page has changed');
     expect(p.textContent).toBe('Live page update');
   });
+
+  test.each(['original', 'rewritten'] as const)(
+    'refuses to switch the %s version after navigation or a live page update',
+    (view) => {
+      const p = paragraph('Original text.');
+      const span = document.createElement('span');
+      span.textContent = ' More details.';
+      p.append(span);
+      const passage = passageForElement(p);
+      const transaction = applyRewrite(passage, {
+        segments: passage.segments.map(({ id }) => ({ id, text: 'Rewritten.' })),
+      });
+      if (view === 'original') toggleRewrite(transaction);
+      const visible = p.textContent;
+      testWindow.location.href = 'https://example.test/another';
+      expect(() => toggleRewrite(transaction)).toThrow('page has changed');
+      expect(p.textContent).toBe(visible);
+      testWindow.location.href = passage.url;
+      const first = p.firstChild?.textContent;
+      (span.firstChild as Text).data = ' Live page update';
+      expect(() => toggleRewrite(transaction)).toThrow('page has changed');
+      expect(() => undoRewrite(transaction)).toThrow('page has changed');
+      expect(p.firstChild?.textContent).toBe(first);
+      expect(span.textContent).toBe(' Live page update');
+      expect(transaction.view).toBe(view);
+      expect(rewrittenRanges(transaction)).toEqual([]);
+    },
+  );
 });

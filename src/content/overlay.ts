@@ -55,17 +55,31 @@ export class Overlay {
     }
   }
 
-  markRewrite(ranges: () => Range[], removed: number, undo: () => void): () => void {
+  markRewrite(
+    ranges: () => Range[],
+    removed: number,
+    undo: () => void,
+    toggle: () => 'original' | 'rewritten' | undefined,
+  ): () => void {
     this.mount();
     const marker = element('div', 'rewrite-marker');
     const outline = element('div', 'outline completed');
     const chip = element('div', 'rewrite-chip');
+    const compare = element('button', '', 'Show Original');
+    compare.type = 'button';
+    compare.addEventListener('click', () => {
+      const view = toggle();
+      if (!view) return;
+      compare.textContent = view === 'original' ? 'Show Rewritten' : 'Show Original';
+      this.updateLoading();
+    });
     const button = element('button', '', 'Undo');
     button.type = 'button';
     button.setAttribute('aria-label', 'Undo this rewrite');
     button.addEventListener('click', undo);
     chip.append(
       element('span', 'removed', `${removed} ${removed === 1 ? 'word' : 'words'} removed`),
+      compare,
       button,
     );
     marker.append(outline, chip);

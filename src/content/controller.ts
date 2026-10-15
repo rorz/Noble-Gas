@@ -2,7 +2,13 @@ import { type Activation, errorMessage } from '../shared/contracts';
 import { validateRewrite } from '../shared/validation';
 import { Overlay } from './overlay';
 import { type Passage, passageForElement, pickableBlock, selectedPassage } from './selection';
-import { RewriteSession, rewrittenRanges, type Transaction, undoRewrite } from './transaction';
+import {
+  RewriteSession,
+  rewrittenRanges,
+  type Transaction,
+  toggleRewrite,
+  undoRewrite,
+} from './transaction';
 import type { RewriteTransport } from './transport';
 
 export class PageController {
@@ -147,6 +153,18 @@ export class PageController {
     }
   }
 
+  private toggle(transaction: Transaction): Transaction['view'] | undefined {
+    if (this.abort) return;
+    this.stopPicker();
+    try {
+      toggleRewrite(transaction);
+      this.ui.hide();
+      return transaction.view;
+    } catch (error) {
+      this.showError(error);
+    }
+  }
+
   private async rewrite(passage: Passage): Promise<void> {
     if (this.abort) return;
     const abort = new AbortController();
@@ -183,6 +201,7 @@ export class PageController {
         () => rewrittenRanges(transaction),
         Math.max(0, transaction.beforeWords - transaction.afterWords),
         () => this.undo(transaction),
+        () => this.toggle(transaction),
       );
       this.history.push({ transaction, removeMarker });
       if (this.history.length > 10) this.history.shift()?.removeMarker();

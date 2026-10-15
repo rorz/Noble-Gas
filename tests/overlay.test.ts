@@ -44,7 +44,12 @@ afterEach(() => {
 test('hiding the loading bar keeps the rewrite chip and its undo action', () => {
   const ui = new Overlay();
   const undo = mock(() => {});
-  const remove = ui.markRewrite(() => [], 12, undo);
+  const remove = ui.markRewrite(
+    () => [],
+    12,
+    undo,
+    () => 'original',
+  );
   ui.show('Rewriting…');
   const bar = shadow.querySelector<HTMLElement>('.bar');
   expect(bar?.hidden).toBe(false);
@@ -52,7 +57,7 @@ test('hiding the loading bar keeps the rewrite chip and its undo action', () => 
   expect(bar?.hidden).toBe(true);
   expect(document.querySelector('noble-gas-ui')).not.toBeNull();
   expect(shadow.querySelector('.rewrite-chip')?.textContent).toContain('12 words removed');
-  shadow.querySelector<HTMLButtonElement>('.rewrite-chip button')?.click();
+  shadow.querySelector<HTMLButtonElement>('[aria-label="Undo this rewrite"]')?.click();
   expect(undo).toHaveBeenCalledTimes(1);
   remove();
   expect(document.querySelector('noble-gas-ui')).toBeNull();
@@ -80,9 +85,42 @@ test('shows loading, then finishes and undoes without a completion message', asy
   expect(p.textContent).toBe('A short paragraph.');
   expect(shadow.querySelector<HTMLElement>('.bar')?.hidden).toBe(true);
   expect(shadow.querySelector('.rewrite-chip')).not.toBeNull();
-  shadow.querySelector<HTMLButtonElement>('.rewrite-chip button')?.click();
+  shadow.querySelector<HTMLButtonElement>('[aria-label="Undo this rewrite"]')?.click();
   expect(p.textContent).toBe(original);
   expect(document.querySelector('noble-gas-ui')).toBeNull();
+});
+
+test('switches versions beside Undo without requesting another rewrite, then undoes the original view', async () => {
+  const p = document.createElement('p');
+  const original = 'This is a very wordy paragraph.';
+  p.textContent = original;
+  document.body.append(p);
+  const range = document.createRange();
+  range.selectNodeContents(p);
+  window.getSelection()?.addRange(range);
+  const transport = mock<RewriteTransport>(async () => ({
+    output: { segments: [{ id: 's0', text: 'A short paragraph.' }] },
+    motion: false,
+  }));
+  const controller = new PageController(transport);
+  controller.activate('selection');
+  await Promise.resolve();
+  const buttons = [...shadow.querySelectorAll<HTMLButtonElement>('.rewrite-chip button')];
+  expect(buttons.map((button) => button.textContent)).toEqual(['Show Original', 'Undo']);
+  expect(p.textContent).toBe('A short paragraph.');
+  buttons[0]?.click();
+  expect(p.textContent).toBe(original);
+  expect(buttons[0]?.textContent).toBe('Show Rewritten');
+  expect(shadow.querySelector('.rewrite-chip')).not.toBeNull();
+  expect(shadow.querySelector<HTMLElement>('.bar')?.hidden).toBe(true);
+  buttons[0]?.click();
+  expect(p.textContent).toBe('A short paragraph.');
+  expect(buttons[0]?.textContent).toBe('Show Original');
+  buttons[0]?.click();
+  buttons[1]?.click();
+  expect(p.textContent).toBe(original);
+  expect(document.querySelector('noble-gas-ui')).toBeNull();
+  expect(transport).toHaveBeenCalledTimes(1);
 });
 
 test('right-click rewrites the clicked passage, with highlighted text taking precedence', async () => {
