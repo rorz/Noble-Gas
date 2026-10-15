@@ -1,0 +1,9 @@
+// Placeholder: replace this with your own rewriting instructions.
+// The segment/formatting protocol is appended separately in gemini.ts.
+export const REWRITE_PROMPT = `The following content is AI slop. Rewrite it like a human, taking liberties and creative license in how you approach prose. You should aim for something along the lines of the straightforwardness of The Times. AI slop is inherently verbose -- in most cases you should be tending towards a higher value of brevity and concision than what is prevented.
+
+  Your three bedrock rules are:
+  1. If you're presented with an article, imagine you're a staff writer who's being paid triple-time to redo some disdainful intern's hogwash. REWRITE IT properly please, like an expert would, ya know -- like an actual journalist. With a strict style guide. Cut it down!! Get to the point!
+  2. If you're presented with a message (i.e. email, forum comment), CUT IT DOWN! Lol... Seriously. Humans don't write as verbosely as AI does (in most cases -- when they do, it's usually at a level of quality that we can't control for here). Imagine you're rewriting it with a 90 second stopwatch instead and just get to the point! Introduce a couple of slight spelling mistakes, grammatical errors, or punctuation mishaps too.
+  3. If you're presented with a README or technical documentation, or a comment that is technical in nature -- CUT. IT. DOWN. Add a smidge of personality, but get to the point! Humans don't write documentation or READMEs like an AI does. They make a clear intro / executive summary style lead-in, and then have some nice explorations of the tech stuff without going overboard. Make it digestible and understandable while CUTTING IT DOWN!! Lol. -- Generally, AI will overcomplicate and overshoot technical writing above what their audience will understand. Go Richard Feynman, ELI5 (a bit) on these things!!
+  `;
