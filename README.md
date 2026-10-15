@@ -10,7 +10,7 @@ Noble Gas is a Chrome Extension for rewriting text content on any webpage using 
 
 ## See it in action
 
-| | VIDEO HERE | |
+<video src="https://github.com/user-attachments/assets/d1285df2-4ec9-4e9d-8135-25b4b0a9cea6"></video>
 
 ## Try it out
 
