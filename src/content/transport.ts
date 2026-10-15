@@ -5,9 +5,13 @@ interface RewriteResult {
   output: RewriteOutput;
   motion: boolean;
 }
-export type RewriteTransport = (segments: Segment[], signal: AbortSignal) => Promise<RewriteResult>;
+export type RewriteTransport = (
+  segments: Segment[],
+  signal: AbortSignal,
+  onProgress: (output: RewriteOutput) => void,
+) => Promise<RewriteResult>;
 
-export const extensionTransport: RewriteTransport = (segments, signal) =>
+export const extensionTransport: RewriteTransport = (segments, signal, onProgress) =>
   new Promise((resolve, reject) => {
     signal.throwIfAborted();
     const port = browser.runtime.connect({ name: 'noble-gas/rewrite' });
@@ -36,10 +40,25 @@ export const extensionTransport: RewriteTransport = (segments, signal) =>
       finish(new Error('The extension reconnected. Select the text and try again.')),
     );
     port.onMessage.addListener((message) => {
+      if (done) return;
       if (message?.type === 'error')
         finish(
           new Error(typeof message.error === 'string' ? message.error : 'The rewrite failed.'),
         );
+      if (message?.type === 'progress') {
+        const parsed = rewriteOutputSchema.safeParse(message.output);
+        if (!parsed.success) {
+          finish(
+            new Error('The model returned an invalid passage. Your original text is restored.'),
+          );
+          return;
+        }
+        try {
+          onProgress(parsed.data);
+        } catch (error) {
+          finish(error instanceof Error ? error : new Error('The rewrite could not be applied.'));
+        }
+      }
       if (message?.type === 'result') {
         const parsed = rewriteOutputSchema.safeParse(message.output);
         if (!parsed.success)

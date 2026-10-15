@@ -20,7 +20,12 @@ export class Overlay {
   private message = element('div', 'message');
   private actions = element('div', 'actions');
   private outline = element('div', 'outline');
-  private paper: HTMLDivElement | undefined;
+  private skeleton = element('div', 'skeleton');
+  private tracking: AbortController | undefined;
+  private frame: number | undefined;
+  private redraw: (() => void) | undefined;
+  private toastTimer: ReturnType<typeof setTimeout> | undefined;
+  private markers = new Map<HTMLElement, () => void>();
 
   constructor() {
     this.host.dataset.nobleGas = '';
@@ -32,14 +37,17 @@ export class Overlay {
     this.message.setAttribute('aria-live', 'polite');
     this.bar.setAttribute('aria-label', 'Noble Gas');
     this.bar.append(element('span', 'badge', 'NG'), this.message, this.actions);
-    this.root.append(style, this.outline, this.bar);
+    this.skeleton.setAttribute('aria-hidden', 'true');
+    this.root.append(style, this.outline, this.skeleton, this.bar);
     this.outline.hidden = true;
     this.bar.hidden = true;
   }
 
   show(text: string, actions: Action[] = [], busy = false): void {
-    if (!this.host.isConnected) document.documentElement.append(this.host);
+    this.mount();
+    clearTimeout(this.toastTimer);
     this.bar.hidden = false;
+    this.bar.classList.remove('toast');
     this.bar.classList.toggle('busy', busy);
     this.message.textContent = text;
     this.actions.replaceChildren();
@@ -51,10 +59,62 @@ export class Overlay {
     }
   }
 
+  toast(text: string): void {
+    this.show(text, [{ label: 'Close', run: () => this.hide() }]);
+    this.bar.classList.add('toast');
+    this.toastTimer = setTimeout(() => this.hide(), 5_000);
+  }
+
+  markRewrite(ranges: () => Range[], removed: number, undo: () => void): () => void {
+    this.mount();
+    const marker = element('div', 'rewrite-marker');
+    const outline = element('div', 'outline completed');
+    const chip = element('div', 'rewrite-chip');
+    const button = element('button', '', 'Undo');
+    button.type = 'button';
+    button.setAttribute('aria-label', 'Undo this rewrite');
+    button.addEventListener('click', undo);
+    chip.append(
+      element('span', 'removed', `${removed} ${removed === 1 ? 'word' : 'words'} removed`),
+      button,
+    );
+    marker.append(outline, chip);
+    this.root.insertBefore(marker, this.bar);
+    this.markers.set(marker, () => {
+      const rects = ranges()
+        .map((range) => range.getBoundingClientRect())
+        .filter((rect) => rect.width && rect.height);
+      marker.hidden = rects.length === 0;
+      if (!rects.length) return;
+      const left = Math.min(...rects.map((rect) => rect.left));
+      const top = Math.min(...rects.map((rect) => rect.top));
+      const right = Math.max(...rects.map((rect) => rect.right));
+      const bottom = Math.max(...rects.map((rect) => rect.bottom));
+      marker.hidden = bottom <= 0 || top >= innerHeight || right <= 0 || left >= innerWidth;
+      if (marker.hidden) return;
+      this.positionOutline(outline, new DOMRect(left, top, right - left, bottom - top));
+      Object.assign(chip.style, {
+        left: `${Math.max(chip.offsetWidth + 8, Math.min(right + 6, innerWidth - 8))}px`,
+        top: `${Math.max(8, top - chip.offsetHeight - 5)}px`,
+      });
+    });
+    this.updateLoading();
+    return () => {
+      this.markers.delete(marker);
+      marker.remove();
+      this.updateLoading();
+      this.unmountIfIdle();
+    };
+  }
+
   highlight(rect?: DOMRect): void {
     this.outline.hidden = !rect;
     if (!rect) return;
-    Object.assign(this.outline.style, {
+    this.positionOutline(this.outline, rect);
+  }
+
+  private positionOutline(outline: HTMLElement, rect: DOMRect): void {
+    Object.assign(outline.style, {
       left: `${rect.left - 6}px`,
       top: `${rect.top - 5}px`,
       width: `${rect.width + 12}px`,
@@ -62,77 +122,105 @@ export class Overlay {
     });
   }
 
-  async reveal(text: string, rect: DOMRect, signal: AbortSignal): Promise<void> {
-    signal.throwIfAborted();
-    const paper = element('div', 'paper');
-    this.paper = paper;
-    const width = Math.max(240, Math.min(rect.width + 40, 640, window.innerWidth - 32));
-    Object.assign(paper.style, {
-      width: `${width}px`,
-      left: `${Math.max(16, Math.min(rect.left - 20, window.innerWidth - width - 16))}px`,
-      top: `${Math.max(16, Math.min(rect.top - 16, window.innerHeight - 400))}px`,
-    });
-    const label = element('div', 'paper-label');
-    label.append(element('span', '', 'NG / RECOMPOSITION'), element('span', '', '04.00'));
-    const body = element('div', 'paper-text');
-    paper.append(label, body);
-    this.root.append(paper);
-    await paper.animate(
-      [
-        { opacity: 0, transform: 'translateY(4px)' },
-        { opacity: 1, transform: 'translateY(-8px)' },
-      ],
-      {
-        duration: 180,
-        easing: 'cubic-bezier(.2,.8,.2,1)',
-        fill: 'forwards',
-      },
-    ).finished;
-    const preview = text.length > 900 ? `${text.slice(0, 900)}…` : text;
-    const graphemes = [
-      ...new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(preview),
-    ].map((part) => part.segment);
-    const started = performance.now();
-    await new Promise<void>((resolve, reject) => {
-      const tick = () => {
-        if (signal.aborted) {
-          reject(new DOMException('Stopped', 'AbortError'));
-          return;
+  startLoading(selection: () => Range | undefined, pending: () => Range[]): void {
+    this.clearLoading();
+    this.redraw = () => {
+      const range = selection();
+      this.highlight(range?.getBoundingClientRect());
+      const lines = document.createDocumentFragment();
+      for (const range of pending()) {
+        const parent = range.startContainer.parentElement;
+        const ink = parent ? getComputedStyle(parent).color : '#333';
+        let background = '#fff';
+        for (let node = parent; node; node = node.parentElement) {
+          const color = getComputedStyle(node).backgroundColor;
+          if (color !== 'rgba(0, 0, 0, 0)' && color !== 'transparent') {
+            background = color;
+            break;
+          }
         }
-        const progress = Math.min(1, (performance.now() - started) / 720);
-        body.textContent = graphemes.slice(0, Math.ceil(progress * graphemes.length)).join('');
-        if (progress === 1) resolve();
-        else requestAnimationFrame(tick);
-      };
-      requestAnimationFrame(tick);
+        for (const rect of range.getClientRects()) {
+          if (rect.bottom < 0 || rect.top > window.innerHeight || !rect.width || !rect.height)
+            continue;
+          const line = element('div', 'skeleton-line');
+          Object.assign(line.style, {
+            left: `${rect.left}px`,
+            top: `${rect.top}px`,
+            width: `${rect.width}px`,
+            height: `${rect.height}px`,
+          });
+          line.style.setProperty('--page-ink', ink);
+          line.style.setProperty('--page-background', background);
+          lines.append(line);
+        }
+      }
+      this.skeleton.replaceChildren(lines);
+    };
+    this.updateLoading();
+  }
+
+  private mount(): void {
+    if (this.host.isConnected) return;
+    document.documentElement.append(this.host);
+    this.tracking = new AbortController();
+    const { signal } = this.tracking;
+    document.addEventListener('scroll', () => this.updateLoading(), {
+      signal,
+      capture: true,
+      passive: true,
     });
-    signal.throwIfAborted();
-  }
-
-  async settle(): Promise<void> {
-    if (this.paper) {
-      await this.paper.animate(
-        [
-          { opacity: 1, transform: 'translateY(-8px)' },
-          { opacity: 0, transform: 'translateY(0)' },
-        ],
-        {
-          duration: 240,
-          easing: 'ease-in',
-          fill: 'forwards',
-        },
-      ).finished;
+    window.addEventListener('resize', () => this.updateLoading(), { signal });
+    const resize = new ResizeObserver(() => this.updateLoading());
+    resize.observe(document.documentElement);
+    const mutation = new MutationObserver(() => this.updateLoading());
+    if (document.body) {
+      resize.observe(document.body);
+      mutation.observe(document.body, {
+        subtree: true,
+        childList: true,
+        characterData: true,
+        attributes: true,
+        attributeFilter: ['hidden', 'class', 'style'],
+      });
     }
-    this.clearPaper();
+    signal.addEventListener(
+      'abort',
+      () => {
+        resize.disconnect();
+        mutation.disconnect();
+      },
+      { once: true },
+    );
   }
 
-  clearPaper(): void {
-    this.paper?.remove();
-    this.paper = undefined;
+  updateLoading(): void {
+    if (this.frame !== undefined) return;
+    this.frame = requestAnimationFrame(() => {
+      this.frame = undefined;
+      this.redraw?.();
+      for (const redraw of this.markers.values()) redraw();
+    });
+  }
+
+  clearLoading(): void {
+    this.redraw = undefined;
+    this.skeleton.replaceChildren();
     this.highlight();
+    this.updateLoading();
   }
   hide(): void {
-    this.clearPaper();
+    clearTimeout(this.toastTimer);
+    this.clearLoading();
+    this.bar.hidden = true;
+    this.unmountIfIdle();
+  }
+
+  private unmountIfIdle(): void {
+    if (!this.bar.hidden || this.markers.size) return;
+    this.tracking?.abort();
+    this.tracking = undefined;
+    if (this.frame !== undefined) cancelAnimationFrame(this.frame);
+    this.frame = undefined;
     this.host.remove();
   }
 }

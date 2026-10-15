@@ -209,45 +209,6 @@
   .status:empty {
     display: none;
   }
-  .segmented {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    border: 1px solid var(--line);
-  }
-  .segmented label {
-    position: relative;
-    cursor: pointer;
-    text-align: center;
-    font: 10px var(--mono);
-  }
-  .segmented label + label {
-    border-left: 1px solid var(--line);
-  }
-  .segmented input {
-    position: absolute;
-    opacity: 0;
-    width: 100%;
-    height: 100%;
-    left: 0;
-    top: 0;
-    margin: 0;
-    cursor: pointer;
-  }
-  .segmented span {
-    display: block;
-    padding: 12px 6px;
-  }
-  .segmented input:checked + span {
-    background: var(--ink);
-    color: var(--paper);
-  }
-  .segmented input:focus-visible + span {
-    outline: 2px solid var(--ink);
-    outline-offset: 3px;
-  }
-  .segmented input:hover:not(:checked) + span {
-    background: #e3e2d7;
-  }
   .form-label {
     display: block;
     font-size: 12px;
@@ -280,11 +241,6 @@
     color: var(--muted);
     font-size: 11px;
     line-height: 1.7;
-  }
-  .strength-field {
-    border: 0;
-    padding: 0;
-    margin: 0;
   }
 }
 @media (prefers-reduced-motion: reduce) {

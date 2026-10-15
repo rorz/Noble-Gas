@@ -3,7 +3,7 @@ import { type RewriteOutput, rewriteOutputSchema, type Segment } from './contrac
 /** Only these application-authored messages may be shown after model validation. */
 export class RewriteValidationError extends Error {}
 
-/** Require a complete one-to-one reply before touching the document. */
+/** Require a complete one-to-one reply before committing the streamed draft. */
 export function validateRewrite(input: Segment[], output: unknown): RewriteOutput {
   const parsed = rewriteOutputSchema.safeParse(output);
   if (!parsed.success)
@@ -18,13 +18,17 @@ export function validateRewrite(input: Segment[], output: unknown): RewriteOutpu
   let total = 0;
   for (const segment of input) {
     const replacement = byId.get(segment.id);
-    if (!replacement || (segment.locked && replacement.text !== segment.text)) {
-      throw new RewriteValidationError('The model changed protected text. Your page is unchanged.');
+    if (!replacement) {
+      throw new RewriteValidationError(
+        'The model returned an incomplete passage. Your page is unchanged.',
+      );
     }
-    if (!segment.locked) {
+    if (segment.text.trim()) {
       const leading = segment.text.match(/^\s*/)?.[0] ?? '';
       const trailing = segment.text.match(/\s*$/)?.[0] ?? '';
       replacement.text = leading + replacement.text.trim() + trailing;
+    } else {
+      replacement.text = segment.text;
     }
     // Text is never interpreted as HTML, but markup in prose is still an invalid rewrite.
     if (/<\/?[a-z][^>]*>/i.test(replacement.text) && !/<\/?[a-z][^>]*>/i.test(segment.text)) {

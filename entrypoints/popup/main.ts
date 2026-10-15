@@ -4,36 +4,36 @@ import {
   type Activation,
   errorMessage,
   type PublicSettings,
-  type Strength,
   settingsSchema,
 } from '../../src/shared/contracts';
-import { inExtension, loadSettings, openChamber, send } from '../../src/ui/bridge';
+import { inExtension, loadSettings, send } from '../../src/ui/bridge';
 import { query, showStatus } from '../../src/ui/dom';
 
-const notes: Record<Strength, string> = {
-  light: 'A small edit. The original voice stays.',
-  balanced: 'Clearer sentences. All the meaning.',
-  thorough: 'Cut the padding. Keep every useful detail.',
-};
 let settings: PublicSettings;
-const pick = query<HTMLButtonElement>('#pick');
-const selection = query<HTMLButtonElement>('#selection');
+const rewrite = query<HTMLButtonElement>('#rewrite');
 const key = query<HTMLInputElement>('#api-key');
 const save = query<HTMLButtonElement>('#save-key');
 const accordion = query<HTMLDetailsElement>('#key-accordion');
 const forget = query<HTMLButtonElement>('#forget-key');
-const model = query<HTMLSelectElement>('#model');
+const options = query<HTMLFieldSetElement>('#rewrite-options');
+const thinking = query<HTMLSelectElement>('#thinking-level');
+const webSearch = query<HTMLInputElement>('#web-search');
+
+function setBusy(busy: boolean): void {
+  rewrite.disabled = busy;
+  options.disabled = busy || !inExtension;
+  key.disabled = busy || !inExtension;
+  save.disabled = busy || !inExtension;
+  forget.disabled = busy;
+}
 
 function render(): void {
-  query<HTMLInputElement>(`input[value="${settings.strength}"]`).checked = true;
-  query('#strength-note').textContent = notes[settings.strength];
   query('#key-label').textContent = settings.hasKey ? 'API key saved' : 'Set API key';
-  model.value = settings.model;
   key.placeholder = settings.hasKey ? 'Paste a replacement Gemini key' : 'Paste your Gemini key';
   forget.hidden = !settings.hasKey;
-  pick.disabled = false;
-  selection.disabled = false;
-  save.disabled = !inExtension;
+  thinking.value = settings.thinkingLevel;
+  webSearch.checked = settings.webSearch;
+  setBusy(false);
 }
 
 async function activate(mode: Activation): Promise<void> {
@@ -44,56 +44,50 @@ async function activate(mode: Activation): Promise<void> {
       key.focus();
       return;
     }
-    pick.disabled = true;
-    selection.disabled = true;
+    setBusy(true);
     await send({ type: 'activate', mode });
     window.close();
   } catch (error) {
     showStatus(errorMessage(error), true);
   } finally {
-    pick.disabled = false;
-    selection.disabled = false;
+    render();
   }
 }
 
-async function updatePreferences(): Promise<void> {
-  if (!settings) return;
-  const values = settingsSchema.parse({
-    ...settings,
-    model: model.value,
-    strength: query<HTMLInputElement>('input[name="strength"]:checked').value,
-  });
-  try {
-    settings = inExtension
-      ? await send<PublicSettings>({
-          type: 'save-settings',
-          settings: values,
-          rememberKey: settings.rememberKey,
-        })
-      : { ...settings, ...values };
-  } catch (error) {
-    showStatus(errorMessage(error), true);
-  }
-  render();
-}
-
-pick.addEventListener('click', () => void activate('pick'));
-selection.addEventListener('click', () => void activate('selection'));
+rewrite.addEventListener('click', () => void activate('auto'));
 query('#undo').addEventListener('click', () => void activate('undo'));
-query('#chamber').addEventListener(
-  'click',
-  () => void openChamber().catch((error: unknown) => showStatus(errorMessage(error), true)),
-);
-for (const radio of document.querySelectorAll<HTMLInputElement>('input[name="strength"]'))
-  radio.addEventListener('change', () => void updatePreferences());
-model.addEventListener('change', () => void updatePreferences());
 accordion.addEventListener('toggle', () => {
   if (accordion.open) key.focus();
 });
 
+async function savePreferences(): Promise<void> {
+  if (!settings) return;
+  setBusy(true);
+  try {
+    settings = await send<PublicSettings>({
+      type: 'save-settings',
+      settings: settingsSchema.parse({
+        ...settings,
+        thinkingLevel: thinking.value,
+        webSearch: webSearch.checked,
+      }),
+      rememberKey: settings.rememberKey,
+    });
+    showStatus('Preferences saved.');
+  } catch (error) {
+    showStatus(errorMessage(error), true);
+  } finally {
+    render();
+  }
+}
+
+thinking.addEventListener('change', () => void savePreferences());
+webSearch.addEventListener('change', () => void savePreferences());
+
 query('#key-form').addEventListener('submit', async (event) => {
   event.preventDefault();
-  save.disabled = true;
+  if (!settings) return;
+  setBusy(true);
   try {
     if (key.value.trim().length < 16) throw new Error('Paste the complete Gemini API key.');
     settings = await send<PublicSettings>({
@@ -104,29 +98,27 @@ query('#key-form').addEventListener('submit', async (event) => {
     });
     key.value = '';
     accordion.open = false;
-    render();
     showStatus('Gemini key saved. Ready when you are.');
   } catch (error) {
     showStatus(errorMessage(error), true);
   } finally {
-    save.disabled = !inExtension;
+    render();
   }
 });
 forget.addEventListener('click', async () => {
-  forget.disabled = true;
+  if (!settings) return;
+  setBusy(true);
   try {
     settings = await send<PublicSettings>({ type: 'forget-key' });
     key.value = '';
-    render();
     showStatus('Key removed.');
   } catch (error) {
     showStatus(errorMessage(error), true);
   } finally {
-    forget.disabled = false;
+    render();
   }
 });
-key.disabled = !inExtension;
-save.disabled = true;
+setBusy(true);
 if (!inExtension)
   query('#key-help').textContent = 'Preview only. Open NG in the browser toolbar to save your key.';
 void loadSettings()

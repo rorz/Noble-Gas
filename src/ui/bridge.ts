@@ -15,17 +15,3 @@ export async function loadSettings(): Promise<PublicSettings> {
     ? send({ type: 'get-settings' })
     : { ...settingsSchema.parse({}), hasKey: false, rememberKey: false };
 }
-
-export async function openChamber(): Promise<void> {
-  if (inExtension) {
-    const { browser } = await import('wxt/browser');
-    await browser.tabs.create({ url: browser.runtime.getURL('/chamber.html') });
-  } else window.open('/chamber.html', '_blank', 'noopener');
-}
-
-export async function openPopup(): Promise<void> {
-  if (inExtension) await send({ type: 'open-popup' });
-  else if (document.documentElement.hasAttribute('data-noble-gas-ready'))
-    document.dispatchEvent(new Event('noble-gas:open-popup'));
-  else window.open('/popup.html', '_blank', 'noopener');
-}

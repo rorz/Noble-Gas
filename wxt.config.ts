@@ -7,7 +7,6 @@ export default defineConfig({
   webExt: {
     binaries: process.env.NOBLE_GAS_BROWSER ? { chrome: process.env.NOBLE_GAS_BROWSER } : {},
     chromiumArgs: ['--user-data-dir=./.wxt/chrome-data', '--no-first-run'],
-    startUrls: ['http://localhost:3000/entrypoints/chamber/index.html'],
   },
   manifest: ({ command }) => ({
     name: 'Noble Gas',

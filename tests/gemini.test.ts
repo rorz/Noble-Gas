@@ -1,9 +1,64 @@
 import { expect, spyOn, test } from 'bun:test';
 import { APICallError } from 'ai';
 import { modelError, rewriteWithGemini } from '../src/background/gemini';
-import { settingsSchema } from '../src/shared/contracts';
+import { type RewriteOutput, settingsSchema } from '../src/shared/contracts';
 
-test('the real SDK sends the Gemini key directly to Google and parses structured streaming output', async () => {
+const pageUrl = 'https://github.com/example/project/pull/42?tab=conversation#issuecomment-123';
+
+test('emits partial prose before the Google response finishes', async () => {
+  let stream: ReadableStreamDefaultController<Uint8Array> | undefined;
+  const encoder = new TextEncoder();
+  const chunk = (text: string, finished = false) =>
+    encoder.encode(
+      `data: ${JSON.stringify({
+        candidates: [
+          {
+            content: { role: 'model', parts: [{ text }] },
+            ...(finished ? { finishReason: 'STOP' } : {}),
+          },
+        ],
+      })}\n\n`,
+    );
+  const fakeFetch = spyOn(globalThis, 'fetch').mockResolvedValue(
+    new Response(
+      new ReadableStream({
+        start(controller) {
+          stream = controller;
+          controller.enqueue(chunk('{"segments":[{"id":"s0","text":"Clear'));
+        },
+      }),
+      { headers: { 'content-type': 'text/event-stream' } },
+    ),
+  );
+  try {
+    const first = Promise.withResolvers<RewriteOutput>();
+    let finished = false;
+    const rewrite = rewriteWithGemini(
+      [{ id: 's0', block: 0, text: 'It is worth noting this prose.' }],
+      pageUrl,
+      'test-only-dummy-key',
+      settingsSchema.parse({}),
+      new AbortController().signal,
+      (output) => first.resolve(output),
+    ).then((output) => {
+      finished = true;
+      return output;
+    });
+    expect((await first.promise).segments).toEqual([{ id: 's0', text: 'Clear' }]);
+    expect(finished).toBe(false);
+    stream?.enqueue(chunk(' prose."}]}', true));
+    stream?.close();
+    expect(await rewrite).toEqual({ segments: [{ id: 's0', text: 'Clear prose.' }] });
+  } finally {
+    fakeFetch.mockRestore();
+  }
+});
+
+test.each([
+  {},
+  { thinkingLevel: 'medium', webSearch: false },
+  { thinkingLevel: 'high', webSearch: true },
+])('sends the page URL and saved thinking/search settings: %j', async (preferences) => {
   const output = { segments: [{ id: 's0', text: 'Clear prose.' }] };
   const event = {
     candidates: [
@@ -20,13 +75,13 @@ test('the real SDK sends the Gemini key directly to Google and parses structured
     }),
   );
   try {
-    const segments = [
-      { id: 's0', block: 0, text: 'It is worth noting this prose.', locked: false },
-    ];
+    const segments = [{ id: 's0', block: 0, text: 'It is worth noting this prose.' }];
+    const settings = settingsSchema.parse(preferences);
     const result = await rewriteWithGemini(
       segments,
-      settingsSchema.parse({}),
+      pageUrl,
       'test-only-dummy-key',
+      settings,
       new AbortController().signal,
     );
     expect(result).toEqual(output);
@@ -37,7 +92,11 @@ test('the real SDK sends the Gemini key directly to Google and parses structured
     );
     expect(new Headers(calls[0]?.[1]?.headers).get('x-goog-api-key')).toBe('test-only-dummy-key');
     const body = JSON.parse(String(calls[0]?.[1]?.body));
-    expect(JSON.parse(body.contents[0].parts[0].text)).toEqual(segments);
+    expect(body.generationConfig.thinkingConfig.thinkingLevel).toBe(settings.thinkingLevel);
+    expect(JSON.parse(body.contents[0].parts[0].text)).toEqual({ pageUrl, segments });
+    if (settings.webSearch) expect(body.tools).toEqual([{ googleSearch: {} }]);
+    else expect(body.tools).toBeUndefined();
+    expect(body.generationConfig.responseMimeType).toBe('application/json');
     // Google accepts the shape, but rejects maxItems: 160 even for one segment.
     expect(body.generationConfig.responseJsonSchema.properties.segments.minItems).toBe(1);
     expect(body.generationConfig.responseJsonSchema.properties.segments).not.toHaveProperty(
@@ -87,9 +146,10 @@ test('streaming HTTP failures preserve the actionable Google error instead of lo
       let failure: unknown;
       try {
         await rewriteWithGemini(
-          [{ id: 's0', block: 0, text: 'A paragraph to edit.', locked: false }],
-          settingsSchema.parse({}),
+          [{ id: 's0', block: 0, text: 'A paragraph to edit.' }],
+          pageUrl,
           'test-only-dummy-key',
+          settingsSchema.parse({}),
           new AbortController().signal,
         );
       } catch (error) {

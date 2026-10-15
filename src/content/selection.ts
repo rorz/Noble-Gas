@@ -2,7 +2,6 @@ import { MAX_CHARACTERS, MAX_SEGMENTS, type Segment } from '../shared/contracts'
 
 const EXCLUDED =
   'script, style, noscript, textarea, input, select, option, button, pre, svg, math, [hidden], [aria-hidden="true"], [role="textbox"], [data-noble-gas]';
-const PROTECTED = 'a, code, kbd, samp, var, sup, .katex, .MathJax';
 const BLOCKS = 'p, h1, h2, h3, h4, h5, h6, li, blockquote, td, th, dd, dt, figcaption';
 
 interface TextSlice {
@@ -64,7 +63,6 @@ export function capturePassage(range: Range): Passage {
           id: `s${slices.length}`,
           block: blocks.get(block) ?? 0,
           text: selected,
-          locked: Boolean(parent.closest(PROTECTED)) || !selected.trim(),
         };
         slices.push({ node: text, before: text.data, start, end, segment });
       }
@@ -73,8 +71,8 @@ export function capturePassage(range: Range): Passage {
       throw new Error('That passage has too many formatting boundaries. Select a little less.');
     node = walker.nextNode();
   }
-  if (!slices.some(({ segment }) => !segment.locked)) {
-    throw new Error('Choose prose outside code blocks, links, and text editors.');
+  if (!slices.some(({ segment }) => segment.text.trim())) {
+    throw new Error('Choose text outside code blocks and text editors.');
   }
   return {
     slices,

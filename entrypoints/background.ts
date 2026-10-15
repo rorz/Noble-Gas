@@ -16,7 +16,7 @@ export default defineBackground(() => {
     browser.contextMenus.create({
       id: 'noble-gas',
       title: 'De-slop with Noble Gas',
-      contexts: ['selection'],
+      contexts: ['page', 'selection'],
     });
     if (details.reason === 'install') await browser.action.openPopup();
   });
@@ -29,7 +29,8 @@ export default defineBackground(() => {
         await browser.action.openPopup();
         return;
       }
-      await activateTab('selection', tab.id);
+      // Selection currently runs in the main frame; never reuse its last target for an iframe.
+      await activateTab(info.frameId ? 'pick' : 'context', tab.id);
     } catch {
       // A page may have navigated or disallowed injection after the menu opened.
       await browser.action.openPopup();
@@ -56,8 +57,7 @@ export default defineBackground(() => {
     if (!parsed.success) return false;
     const message = parsed.data;
     // Only our popup may read settings, configure keys, or activate tabs.
-    if (message.type !== 'open-popup' && !sender.url?.startsWith(browser.runtime.getURL('/')))
-      return false;
+    if (!sender.url?.startsWith(browser.runtime.getURL('/'))) return false;
     const handle = async () => {
       switch (message.type) {
         case 'get-settings':
@@ -66,8 +66,6 @@ export default defineBackground(() => {
           return saveConfiguration(message.settings, message.apiKey, message.rememberKey);
         case 'forget-key':
           return forgetKey();
-        case 'open-popup':
-          return browser.action.openPopup();
         case 'activate': {
           const settings = await publicSettings();
           if (!settings.hasKey && message.mode !== 'undo')
@@ -93,6 +91,8 @@ export default defineBackground(() => {
       port.disconnect();
       return;
     }
+    // Chrome supplies the URL of the document that opened this rewrite's connection.
+    const pageUrl = port.sender.url ?? port.sender.tab.url ?? '';
     const abort = new AbortController();
     let started = false;
     let disconnected = false;
@@ -119,13 +119,15 @@ export default defineBackground(() => {
       started = true;
       const run = async () => {
         const { apiKey, settings } = await readConfiguration();
-        if (!disconnected)
-          port.postMessage({ type: 'started', model: settings.model, motion: settings.motion });
         const output = await rewriteWithGemini(
           parsed.data.segments,
-          settings,
+          pageUrl,
           apiKey,
+          settings,
           abort.signal,
+          (output) => {
+            if (!disconnected) port.postMessage({ type: 'progress', output });
+          },
         );
         if (!disconnected) port.postMessage({ type: 'result', output, motion: settings.motion });
       };

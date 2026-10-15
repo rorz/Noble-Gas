@@ -39,27 +39,13 @@ h1 {
   margin: 14px 0 20px;
   color: var(--muted);
 }
-.strength-field legend {
-  width: 100%;
-  margin-bottom: 10px;
-}
-.treatment .help {
-  margin-top: 8px;
-  font-size: 10px;
-}
 .reaction {
   margin-top: 18px;
-}
-.reaction > .eyebrow {
-  margin-bottom: 10px;
 }
 .reaction .btn {
   width: 100%;
   min-height: 39px;
   padding: 10px 14px;
-}
-.reaction .btn + .btn {
-  margin-top: 8px;
 }
 .shortcut {
   display: flex;
@@ -78,6 +64,37 @@ kbd {
 .key-accordion {
   border-top: 1px solid var(--line);
   margin-top: 18px;
+}
+.rewrite-options {
+  border: 0;
+  border-top: 1px solid var(--line);
+  padding: 14px 0 0;
+  margin: 18px 0 0;
+  display: grid;
+  gap: 12px;
+}
+.option-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font: 11px var(--mono);
+  cursor: pointer;
+}
+.option-row select {
+  min-width: 106px;
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: var(--white);
+  color: var(--ink);
+  box-shadow: inset 1px 1px #d8d7cc;
+}
+.option-row input {
+  accent-color: var(--ink);
+  width: 15px;
+  height: 15px;
+  margin: 0;
 }
 .key-accordion summary {
   list-style: none;
@@ -141,18 +158,4 @@ footer {
 }
 footer .text-button {
   font-size: 8px;
-}
-.model-picker {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.model-picker select {
-  border: 0;
-  background: transparent;
-  color: var(--ink);
-  font: 9px var(--mono);
-  padding: 4px 0;
-  max-width: 135px;
-  cursor: pointer;
 }

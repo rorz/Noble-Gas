@@ -2,16 +2,25 @@ import { type Activation, errorMessage } from '../shared/contracts';
 import { validateRewrite } from '../shared/validation';
 import { Overlay } from './overlay';
 import { type Passage, passageForElement, pickableBlock, selectedPassage } from './selection';
-import { applyRewrite, passageText, type Transaction, undoRewrite } from './transaction';
+import { RewriteSession, rewrittenRanges, type Transaction, undoRewrite } from './transaction';
 import type { RewriteTransport } from './transport';
 
 export class PageController {
   private ui = new Overlay();
   private abort: AbortController | undefined;
   private picker: AbortController | undefined;
-  private history: Transaction[] = [];
+  private contextTarget: Element | null = null;
+  private history: { transaction: Transaction; removeMarker: () => void }[] = [];
 
-  constructor(private transport: RewriteTransport) {}
+  constructor(private transport: RewriteTransport) {
+    document.addEventListener(
+      'contextmenu',
+      (event) => {
+        this.contextTarget = pickableBlock(event.target);
+      },
+      { capture: true },
+    );
+  }
 
   activate(mode: Activation): void {
     if (this.abort) return;
@@ -21,9 +30,15 @@ export class PageController {
       return;
     }
     const hasSelection = Boolean(window.getSelection()?.toString().trim());
-    if (mode === 'selection' || (mode === 'auto' && hasSelection)) {
+    if (mode === 'selection' || ((mode === 'auto' || mode === 'context') && hasSelection)) {
       try {
         void this.rewrite(selectedPassage());
+      } catch (error) {
+        this.showError(error);
+      }
+    } else if (mode === 'context' && this.contextTarget?.isConnected) {
+      try {
+        void this.rewrite(passageForElement(this.contextTarget));
       } catch (error) {
         this.showError(error);
       }
@@ -106,32 +121,27 @@ export class PageController {
   }
 
   private showError(error: unknown): void {
-    this.ui.clearPaper();
+    this.ui.clearLoading();
     this.ui.show(errorMessage(error), [{ label: 'Dismiss', run: () => this.ui.hide() }]);
-  }
-
-  private showUndo(message: string): void {
-    const actions = this.history.length
-      ? [
-          {
-            label: 'Undo',
-            run: () => this.undoLast(),
-          },
-        ]
-      : [];
-    this.ui.show(message, [...actions, { label: 'Close', run: () => this.ui.hide() }]);
   }
 
   private undoLast(): void {
     const last = this.history.at(-1);
     if (!last) {
-      this.showUndo('Nothing to undo on this page.');
+      this.ui.toast('Nothing to undo on this page.');
       return;
     }
+    this.undo(last.transaction);
+  }
+
+  private undo(transaction: Transaction): void {
+    if (this.abort) return;
+    this.stopPicker();
     try {
-      undoRewrite(last);
-      this.history.pop();
-      this.showUndo('Original text restored.');
+      undoRewrite(transaction);
+      const index = this.history.findIndex((entry) => entry.transaction === transaction);
+      this.history.splice(index, 1)[0]?.removeMarker();
+      this.ui.toast('Original text restored.');
     } catch (error) {
       this.showError(error);
     }
@@ -140,51 +150,49 @@ export class PageController {
   private async rewrite(passage: Passage): Promise<void> {
     if (this.abort) return;
     const abort = new AbortController();
+    const session = new RewriteSession(passage);
     this.abort = abort;
     const cancel = () => abort.abort();
     const onEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') cancel();
     };
     document.addEventListener('keydown', onEscape, { signal: abort.signal });
-    this.ui.highlight(passage.range.getBoundingClientRect());
-    this.ui.show(
-      'Distilling. Keeping the substance.',
-      [{ label: 'Cancel · Esc', run: cancel }],
-      true,
+    window.getSelection()?.removeAllRanges();
+    this.ui.show('Rewriting…', [{ label: 'Cancel · Esc', run: cancel }], true);
+    this.ui.startLoading(
+      () => session.selectionRange(),
+      () => session.pendingRanges(),
     );
     try {
-      const result = await this.transport(passage.segments, abort.signal);
+      const result = await this.transport(passage.segments, abort.signal, (output) => {
+        abort.signal.throwIfAborted();
+        session.preview(output);
+        this.ui.updateLoading();
+      });
       abort.signal.throwIfAborted();
       const output = validateRewrite(passage.segments, result.output);
       const byId = new Map(output.segments.map((segment) => [segment.id, segment.text]));
       if (passage.segments.every((segment) => byId.get(segment.id) === segment.text)) {
-        this.ui.clearPaper();
-        this.showUndo('Already clear. No changes needed.');
+        session.rollback();
+        this.ui.clearLoading();
+        this.ui.toast('Already clear. No changes needed.');
         return;
       }
-      const motion = result.motion && !matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (motion) {
-        const text = passageText(
-          passage.segments.map((segment) => ({
-            ...segment,
-            text: byId.get(segment.id) ?? segment.text,
-          })),
-        );
-        await this.ui.reveal(text, passage.range.getBoundingClientRect(), abort.signal);
-      }
-      abort.signal.throwIfAborted();
-      const transaction = applyRewrite(passage, output);
-      this.history.push(transaction);
-      if (this.history.length > 10) this.history.shift();
-      await this.ui.settle();
-      const fewer = transaction.beforeWords - transaction.afterWords;
-      this.showUndo(
-        fewer > 0 ? `Recomposed. ${fewer} fewer words.` : 'Recomposed. Same substance.',
+      const transaction = session.commit(output);
+      this.ui.clearLoading();
+      const removeMarker = this.ui.markRewrite(
+        () => rewrittenRanges(transaction),
+        Math.max(0, transaction.beforeWords - transaction.afterWords),
+        () => this.undo(transaction),
       );
+      this.history.push({ transaction, removeMarker });
+      if (this.history.length > 10) this.history.shift()?.removeMarker();
+      this.ui.toast('Rewrite complete.');
     } catch (error) {
+      session.rollback();
+      this.ui.clearLoading();
       if (abort.signal.aborted) {
-        this.ui.clearPaper();
-        this.showUndo('Stopped. Your original text is still here.');
+        this.ui.toast('Stopped. Your original text is still here.');
       } else this.showError(error);
     } finally {
       document.removeEventListener('keydown', onEscape);

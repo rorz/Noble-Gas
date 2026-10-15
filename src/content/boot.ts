@@ -8,14 +8,6 @@ export function boot(): void {
   if (scope.__nobleGas) return;
   const controller = new PageController(extensionTransport);
   scope.__nobleGas = controller;
-  if (import.meta.env.DEV && location.origin === 'http://localhost:3000') {
-    document.documentElement.setAttribute('data-noble-gas-ready', '');
-    document.addEventListener('noble-gas:open-popup', () => {
-      void browser.runtime.sendMessage({ type: 'open-popup' }).catch(() => {
-        document.documentElement.removeAttribute('data-noble-gas-ready');
-      });
-    });
-  }
   browser.runtime.onMessage.addListener((message, sender, respond) => {
     if (sender.id !== browser.runtime.id || message?.type !== 'ng:activate') return false;
     const mode = activationSchema.safeParse(message.mode);

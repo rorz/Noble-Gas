@@ -22,7 +22,7 @@ if (!chrome) {
   chrome = await install({ browser: Browser.CHROME, buildId, cacheDir });
 }
 console.info(
-  `Noble Gas: Chrome for Testing ${chrome.buildId}. Extension + test chamber open automatically.`,
+  `Noble Gas: Chrome for Testing ${chrome.buildId}. Opens automatically with the extension loaded.`,
 );
 const child = Bun.spawn(['bun', 'run', 'wxt'], {
   env: { ...process.env, NOBLE_GAS_BROWSER: chrome.executablePath },

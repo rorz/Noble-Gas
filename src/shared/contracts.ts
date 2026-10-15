@@ -2,15 +2,10 @@ import { z } from 'zod';
 
 export const MAX_CHARACTERS = 18_000;
 export const MAX_SEGMENTS = 160;
-const DEFAULT_MODEL = 'gemini-4-argon';
-
-const strengthSchema = z.enum(['light', 'balanced', 'thorough']);
-export type Strength = z.infer<typeof strengthSchema>;
-
 export const settingsSchema = z.object({
-  model: z.enum([DEFAULT_MODEL, 'gemini-3.5-flash-lite']).default(DEFAULT_MODEL),
-  strength: strengthSchema.default('balanced'),
   motion: z.boolean().default(true),
+  thinkingLevel: z.enum(['low', 'medium', 'high']).default('low'),
+  webSearch: z.boolean().default(true),
 });
 export type Settings = z.infer<typeof settingsSchema>;
 export type PublicSettings = Settings & { hasKey: boolean; rememberKey: boolean };
@@ -19,7 +14,6 @@ const segmentSchema = z.object({
   id: z.string().regex(/^s\d+$/),
   block: z.number().int().nonnegative(),
   text: z.string().min(1).max(MAX_CHARACTERS),
-  locked: z.boolean(),
 });
 export type Segment = z.infer<typeof segmentSchema>;
 
@@ -39,7 +33,7 @@ export const rewriteRequestSchema = z
     if (new Set(segments.map((segment) => segment.id)).size !== segments.length) {
       context.addIssue({ code: 'custom', message: 'Duplicate segment IDs.' });
     }
-    if (segments.every((segment) => segment.locked || !segment.text.trim())) {
+    if (segments.every((segment) => !segment.text.trim())) {
       context.addIssue({
         code: 'custom',
         message: 'There is no editable prose in this selection.',
@@ -48,7 +42,7 @@ export const rewriteRequestSchema = z
   });
 
 // Argon rejects maxItems: 160 with HTTP 400. Send the response shape to Google
-// and enforce the segment cap locally before any text reaches the page.
+// and enforce the segment cap locally before previewing or committing text.
 export const rewriteResponseSchema = z.object({
   segments: z
     .array(
@@ -64,7 +58,7 @@ export const rewriteOutputSchema = rewriteResponseSchema.extend({
 });
 export type RewriteOutput = z.infer<typeof rewriteOutputSchema>;
 
-export const activationSchema = z.enum(['auto', 'pick', 'selection', 'undo']);
+export const activationSchema = z.enum(['auto', 'pick', 'selection', 'context', 'undo']);
 export type Activation = z.infer<typeof activationSchema>;
 
 export const controlMessageSchema = z.discriminatedUnion('type', [
@@ -77,7 +71,6 @@ export const controlMessageSchema = z.discriminatedUnion('type', [
   }),
   z.object({ type: z.literal('forget-key') }),
   z.object({ type: z.literal('activate'), mode: activationSchema }),
-  z.object({ type: z.literal('open-popup') }),
 ]);
 export type ControlMessage = z.infer<typeof controlMessageSchema>;
 export type Reply<T> = { ok: true; data: T } | { ok: false; error: string };

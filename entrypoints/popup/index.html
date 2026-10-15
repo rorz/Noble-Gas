@@ -17,24 +17,15 @@
         </div>
         <div class="hero-copy"><p class="eyebrow muted">An inert intervention.</p><h1>Less noise.<br />Same substance.</h1></div>
       </div>
-      <p class="intro">Lift the text. Lose the filler.</p>
-      <div class="treatment">
-        <fieldset class="strength-field">
-          <legend class="eyebrow rule-label">01 / Intensity</legend>
-          <div class="segmented">
-            <label><input type="radio" name="strength" value="light" /><span>Light</span></label>
-            <label><input type="radio" name="strength" value="balanced" checked /><span>Balanced</span></label>
-            <label><input type="radio" name="strength" value="thorough" /><span>Thorough</span></label>
-          </div>
-        </fieldset>
-        <p class="help" id="strength-note">Clearer sentences. All the meaning.</p>
-      </div>
+      <p class="intro">Highlight text, or click below to pick a passage.</p>
       <div class="reaction">
-        <p class="eyebrow rule-label">02 / Select your material</p>
-        <button type="button" id="pick" class="btn btn-primary" disabled><span>Pick a passage</span><span aria-hidden="true">↗</span></button>
-        <button type="button" id="selection" class="btn" disabled><span>Rewrite highlighted text</span><span aria-hidden="true">⌁</span></button>
+        <button type="button" id="rewrite" class="btn btn-primary" disabled><span>De-slop text</span><span aria-hidden="true">↗</span></button>
         <p class="shortcut"><button class="text-button" id="undo" type="button">Undo last rewrite</button><kbd>⌥ ⇧ N</kbd></p>
       </div>
+      <fieldset class="rewrite-options" id="rewrite-options" aria-label="Rewrite options" disabled>
+        <label class="option-row" for="thinking-level"><span>Thinking level</span><select id="thinking-level"><option value="low" selected>Low</option><option value="medium">Medium</option><option value="high">High</option></select></label>
+        <label class="option-row" for="web-search"><span>Enable web search</span><input id="web-search" type="checkbox" checked /></label>
+      </fieldset>
       <details class="key-accordion" id="key-accordion">
         <summary><span id="key-label">Set API key</span><span class="accordion-plus" aria-hidden="true">+</span></summary>
         <form id="key-form">
@@ -46,7 +37,7 @@
       </details>
       <p id="status" class="status" role="status" aria-live="polite"></p>
     </main>
-    <footer><div class="model-picker"><label for="model">MODEL</label><select id="model" aria-label="Rewrite model"><option value="gemini-4-argon">Argon 4</option><option value="gemini-3.5-flash-lite">Flash-Lite 3.5</option></select></div><button class="text-button" type="button" id="chamber">Test chamber ↗</button></footer>
+    <footer><span>ARGON 4</span></footer>
     <script type="module" src="./main.ts"></script>
   </body>
 </html>

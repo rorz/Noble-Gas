@@ -3,7 +3,6 @@
   "extends": ["pokayoke/recommended"],
   "localRules": [".pokayoke/rules/**/*.rule.ts"],
   "files": [
-    "README.md",
     "src/**/*.ts",
     "entrypoints/**/*.ts",
     "scripts/**/*.ts",
