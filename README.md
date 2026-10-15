@@ -20,6 +20,6 @@ Noble Gas is a Chrome Extension for rewriting text content on any webpage using 
 There are two ways to use Noble Gas:
 
 1. Download the [latest prebuilt ZIP](https://github.com/rorz/Noble-Gas/releases/latest/download/noble-gas-chrome.zip), unzip it, then open `chrome://extensions`, enable **Developer mode**, and choose **Load unpacked** to select the unzipped folder.
-2. Clone the repo and run it as a dev extension.
+2. Clone the repo and run it as a dev extension, or build it yourself and run it as per step 1.
 
 _Noble Gas is not distributed publicly on the Chrome Web Store._
