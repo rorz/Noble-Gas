@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Noble Gas</title>
+    <link rel="icon" href="/mark.svg" />
+  </head>
+  <body>
+    <div class="titlebar"><span>NG — TEXT REFINERY</span><span aria-hidden="true">▧</span></div>
+    <main>
+      <div class="hero">
+        <div class="element" role="img" aria-label="NG, Noble Gas">
+          <div class="element-top"><span>00</span><span>4.00</span></div>
+          <div class="element-symbol">NG</div>
+          <div class="element-bottom"><span>NOBLE GAS</span><span>↗</span></div>
+        </div>
+        <div class="hero-copy"><p class="eyebrow muted">An inert intervention.</p><h1>Less noise.<br />Same substance.</h1></div>
+      </div>
+      <p class="intro">Lift the text. Lose the filler.</p>
+      <div class="treatment">
+        <fieldset class="strength-field">
+          <legend class="eyebrow rule-label">01 / Intensity</legend>
+          <div class="segmented">
+            <label><input type="radio" name="strength" value="light" /><span>Light</span></label>
+            <label><input type="radio" name="strength" value="balanced" checked /><span>Balanced</span></label>
+            <label><input type="radio" name="strength" value="thorough" /><span>Thorough</span></label>
+          </div>
+        </fieldset>
+        <p class="help" id="strength-note">Clearer sentences. All the meaning.</p>
+      </div>
+      <div class="reaction">
+        <p class="eyebrow rule-label">02 / Select your material</p>
+        <button type="button" id="pick" class="btn btn-primary" disabled><span>Pick a passage</span><span aria-hidden="true">↗</span></button>
+        <button type="button" id="selection" class="btn" disabled><span>Rewrite highlighted text</span><span aria-hidden="true">⌁</span></button>
+        <p class="shortcut"><button class="text-button" id="undo" type="button">Undo last rewrite</button><kbd>⌥ ⇧ N</kbd></p>
+      </div>
+      <details class="key-accordion" id="key-accordion">
+        <summary><span id="key-label">Set API key</span><span class="accordion-plus" aria-hidden="true">+</span></summary>
+        <form id="key-form">
+          <label for="api-key" class="form-label">Google Gemini API key</label>
+          <div class="key-row"><input class="field" id="api-key" type="password" placeholder="Paste your Gemini key" autocomplete="off" spellcheck="false" maxlength="512" required /><button class="nt-button" id="save-key" type="submit">Save</button></div>
+          <div class="key-links"><a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer" class="text-button">Get a Gemini key ↗</a><button type="button" id="forget-key" class="text-button" hidden>Remove key</button></div>
+          <p class="help" id="key-help">Saved on this device. Only sent to Google.</p>
+        </form>
+      </details>
+      <p id="status" class="status" role="status" aria-live="polite"></p>
+    </main>
+    <footer><div class="model-picker"><label for="model">MODEL</label><select id="model" aria-label="Rewrite model"><option value="gemini-4-argon">Argon 4</option><option value="gemini-3.5-flash-lite">Flash-Lite 3.5</option></select></div><button class="text-button" type="button" id="chamber">Test chamber ↗</button></footer>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

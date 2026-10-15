@@ -1,0 +1,5 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": ["entrypoints/**/*.{ts,html}", "scripts/*.ts", ".pokayoke/rules/*.rule.ts"],
+  "project": ["**/*.ts", "!node_modules/**", "!.wxt/**", "!.output/**"]
+}

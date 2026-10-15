@@ -1,0 +1,191 @@
+:host,
+.bar,
+.outline,
+.paper {
+  all: initial;
+  color-scheme: light;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  color: #24241f;
+  font-size: 12px;
+  line-height: 1.5;
+}
+* {
+  box-sizing: border-box;
+}
+[hidden] {
+  /* biome-ignore lint/complexity/noImportantStyles: Hidden overlays must override their layout styles. */
+  display: none !important;
+}
+button {
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  border: 1px solid #77776d;
+  background: #eeede6;
+  padding: 6px 10px;
+  border-radius: 0;
+  box-shadow:
+    inset 1px 1px #fff,
+    inset -1px -1px #cac9c0;
+}
+button:hover {
+  background: #fffef6;
+}
+button:active {
+  box-shadow: inset 1px 1px #aaa;
+}
+button:focus-visible {
+  outline: 2px solid #33332b;
+  outline-offset: 3px;
+}
+.bar {
+  pointer-events: auto;
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: calc(100vw - 24px);
+  min-width: 320px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid #56564b;
+  background: #eeede7;
+  box-shadow:
+    3px 3px 0 #25251e30,
+    inset 1px 1px #fff;
+}
+.badge {
+  width: 31px;
+  height: 34px;
+  border: 1px solid #3f3f35;
+  display: grid;
+  place-items: center;
+  font-size: 17px;
+  font-family: Arial, sans-serif;
+  font-weight: 400;
+  flex: 0 0 auto;
+  letter-spacing: -2px;
+  padding-right: 2px;
+}
+.message {
+  flex: 1;
+  max-width: 420px;
+  font-size: 11px;
+}
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.actions:empty {
+  display: none;
+}
+.outline {
+  position: fixed;
+  pointer-events: none;
+  border: 1px solid #3a3a30;
+  outline: 1px solid #fff9;
+  outline-offset: 2px;
+  background: #d3d0bd16;
+}
+.outline::before,
+.outline::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  background: #eeede7;
+  border: 1px solid #3a3a30;
+  position: absolute;
+}
+.outline::before {
+  top: -4px;
+  left: -4px;
+}
+.outline::after {
+  bottom: -4px;
+  right: -4px;
+}
+.paper {
+  position: fixed;
+  pointer-events: none;
+  padding: 16px 20px 22px;
+  background: #f6f5ef;
+  color: #24241f;
+  border: 1px solid #737368;
+  box-shadow: 6px 12px 0 #24241f19;
+  max-height: min(360px, 65vh);
+  overflow: hidden;
+  transform-origin: center bottom;
+}
+.paper::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    #24241f03 3px,
+    #24241f03 4px
+  );
+  pointer-events: none;
+}
+.paper-label {
+  font-size: 9px;
+  letter-spacing: 2px;
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #d2d1c6;
+  margin-bottom: 14px;
+}
+.paper-text {
+  white-space: pre-wrap;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 19px;
+  line-height: 1.55;
+  letter-spacing: -0.2px;
+}
+.paper-text::after {
+  content: "▌";
+  font-family: monospace;
+  font-size: 15px;
+  margin-left: 2px;
+  animation: cursor 700ms steps(1) infinite;
+}
+.busy .badge {
+  animation: breathe 1.8s ease-in-out infinite;
+}
+@keyframes cursor {
+  50% {
+    opacity: 0;
+  }
+}
+@keyframes breathe {
+  50% {
+    opacity: 0.35;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::after {
+    /* biome-ignore lint/complexity/noImportantStyles: Visibility and reduced-motion preferences must override component styles. */
+    animation: none !important;
+  }
+}
+@media (max-width: 480px) {
+  .bar {
+    width: calc(100vw - 24px);
+    min-width: 0;
+    bottom: 12px;
+    gap: 8px;
+  }
+  .actions {
+    flex-wrap: wrap;
+  }
+  .paper-text {
+    font-size: 16px;
+  }
+}

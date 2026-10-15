@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <title>Noble Gas</title>
+  <rect width="128" height="128" rx="6" fill="#eeede7"/>
+  <rect x="8.5" y="8.5" width="111" height="111" stroke="#262622"/>
+  <path d="M23 87V41l31 46V41M104 51a23 23 0 1 0 0 28V65H85" stroke="#262622" stroke-width="3" stroke-linejoin="miter"/>
+  <path d="M18 26h9m-4.5-4.5v9M101 101h10m-10 5h10" stroke="#262622"/>
+  <circle cx="107" cy="25" r="3" fill="#262622"/>
+</svg>

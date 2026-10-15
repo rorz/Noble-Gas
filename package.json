@@ -1,0 +1,39 @@
+{
+  "name": "noble-gas",
+  "description": "Less noise. Same substance. A small instrument for a clearer web.",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.4.2",
+  "scripts": {
+    "dev": "bun scripts/dev.ts",
+    "build": "bun run icons && wxt build",
+    "zip": "bun run icons && wxt zip",
+    "postinstall": "wxt prepare",
+    "icons": "bun scripts/icons.ts",
+    "typecheck": "wxt prepare && tsc --noEmit && tsc --noEmit -p .pokayoke/tsconfig.json",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "test": "bun test ./tests ./.pokayoke/rules",
+    "knip": "knip",
+    "policy": "pokayoke check",
+    "check": "bun run typecheck && bun run lint && bun run test && bun run knip && bun run policy && bun run build"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.15",
+    "@puppeteer/browsers": "^3.2.5",
+    "@types/bun": "^1.4.3",
+    "happy-dom": "^21.0.1",
+    "knip": "^6.41.0",
+    "pokayoke": "^0.0.7",
+    "sharp": "^0.35.5",
+    "typescript": "^7.0.2",
+    "web-ext": "^10.7.0",
+    "wxt": "^0.21.4"
+  },
+  "dependencies": {
+    "@ai-sdk/google": "^4.0.96",
+    "ai": "^7.0.141",
+    "zod": "^4.6.7"
+  }
+}

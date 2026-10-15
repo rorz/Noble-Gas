@@ -1,0 +1,23 @@
+{
+  "$schema": "https://pokayoke.codes/schema.json",
+  "extends": ["pokayoke/recommended"],
+  "localRules": [".pokayoke/rules/**/*.rule.ts"],
+  "files": [
+    "README.md",
+    "src/**/*.ts",
+    "entrypoints/**/*.ts",
+    "scripts/**/*.ts",
+    "wxt.config.ts",
+    "package.json"
+  ],
+  "ignores": ["**/node_modules/**", "**/dist/**", "**/*.d.ts", "**/*.test.ts"],
+  "suppressions": {
+    "directive": "pokayoke-ignore",
+    "requireReason": true,
+    "reportUnused": "warn"
+  },
+  "rules": {
+    "repo/extension-boundaries": "error",
+    "structure/max-file-lines": ["error", { "max": 350 }]
+  }
+}
