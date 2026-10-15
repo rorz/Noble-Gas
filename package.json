@@ -1,7 +1,7 @@
 {
   "name": "noble-gas",
   "description": "Rewrite selected text in place with Gemini.",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "license": "MIT",
   "private": true,
   "type": "module",
