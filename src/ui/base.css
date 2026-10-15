@@ -1,257 +1,109 @@
-@layer reset, base, components;
-@layer reset {
-  *,
-  *::before,
-  *::after {
-    box-sizing: border-box;
-  }
-  body,
-  h1,
-  h2,
-  h3,
-  p {
-    margin: 0;
-  }
-  button,
-  input,
-  select {
-    font: inherit;
-  }
-  button,
-  a,
-  input,
-  select {
-    -webkit-tap-highlight-color: transparent;
-  }
-  button {
-    cursor: pointer;
-  }
-  button:disabled {
-    opacity: 0.45;
-    cursor: wait;
-  }
-  a {
-    color: inherit;
-    text-underline-offset: 3px;
-  }
-  [hidden] {
-    /* biome-ignore lint/complexity/noImportantStyles: Visibility and reduced-motion preferences must override component styles. */
-    display: none !important;
-  }
+* {
+  box-sizing: border-box;
 }
-@layer base {
-  :root {
-    color-scheme: light;
-    --paper: #eeede7;
-    --ink: #292923;
-    --muted: #717166;
-    --line: #c6c5b9;
-    --white: #f9f8f2;
-    --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  }
-  body {
-    background: var(--paper);
-    color: var(--ink);
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-    -webkit-font-smoothing: antialiased;
-  }
-  :focus-visible {
-    outline: 2px solid var(--ink);
-    outline-offset: 4px;
-  }
-  ::selection {
-    background: #d2d1bd;
-    color: #141411;
-  }
+:root {
+  color-scheme: dark;
+  --surface: #292929;
+  --control: #363636;
+  --field: #181818;
+  --ink: #eeeeee;
+  --muted: #a8a8a8;
+  --edge-light: #666666;
+  --edge-dark: #101010;
+  font:
+    15px Tahoma,
+    "MS Sans Serif",
+    Arial,
+    sans-serif;
 }
-@layer components {
-  .mono,
-  .eyebrow {
-    font-family: var(--mono);
-  }
-  .eyebrow {
-    text-transform: uppercase;
-    font-size: 10px;
-    letter-spacing: 1.5px;
-    line-height: 1.5;
-  }
-  .muted {
-    color: var(--muted);
-  }
-  .element {
-    width: 100px;
-    height: 112px;
-    border: 1px solid currentColor;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 9px;
-    flex: 0 0 auto;
-  }
-  .element-top,
-  .element-bottom {
-    display: flex;
-    justify-content: space-between;
-    font: 8px var(--mono);
-  }
-  .element-symbol {
-    font-weight: 300;
-    letter-spacing: -5px;
-    font-size: 52px;
-    line-height: 1;
-  }
-  .element-bottom {
-    font-size: 7px;
-    letter-spacing: 0.5px;
-  }
-  .titlebar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: var(--ink);
-    color: var(--paper);
-    padding: 7px 9px;
-    font: 10px var(--mono);
-    letter-spacing: 1px;
-  }
-  .window-control {
-    display: grid;
-    place-items: center;
-    width: 18px;
-    height: 18px;
-    background: var(--paper);
-    color: var(--ink);
-    border: 1px solid #fff;
-    box-shadow: inset -1px -1px #888;
-    font: 12px var(--mono);
-  }
-  .btn {
-    border: 1px solid var(--ink);
-    min-height: 43px;
-    padding: 11px 16px;
-    background: transparent;
-    color: var(--ink);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    font-size: 12px;
-    font-weight: 500;
-    text-decoration: none;
-    transition:
-      background 120ms,
-      transform 120ms;
-  }
-  .btn:hover {
-    background: #e0dfd4;
-  }
-  .btn:active {
-    transform: translateY(1px);
-  }
-  .btn-primary {
-    background: var(--ink);
-    color: var(--paper);
-  }
-  .btn-primary:hover {
-    background: #414139;
-  }
-  .nt-button {
-    border: 1px solid #8d8d7e;
-    box-shadow:
-      inset 1px 1px #fff,
-      inset -1px -1px #aaa99a;
-    padding: 8px 12px;
-    font: 10px var(--mono);
-    background: var(--paper);
-    color: var(--ink);
-  }
-  .nt-button:hover {
-    background: var(--white);
-  }
-  .nt-button:active {
-    box-shadow: inset 1px 1px #aaa99a;
-  }
-  .text-button {
-    background: none;
-    border: 0;
-    padding: 0;
-    color: var(--muted);
-    font: 10px var(--mono);
-    text-decoration: underline;
-    text-underline-offset: 4px;
-  }
-  .rule-label {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-  }
-  .rule-label::after {
-    content: "";
-    height: 1px;
-    background: var(--line);
-    flex: 1;
-  }
-  .dot {
-    width: 6px;
-    height: 6px;
-    background: currentColor;
-    display: inline-block;
-    border-radius: 50%;
-    margin-right: 6px;
-  }
-  .status {
-    font: 11px / 1.6 var(--mono);
-    color: var(--muted);
-  }
-  .status[data-error="true"] {
-    color: #8a3027;
-  }
-  .status:empty {
-    display: none;
-  }
-  .form-label {
-    display: block;
-    font-size: 12px;
-    margin-bottom: 10px;
-  }
-  .field {
-    border: 1px solid var(--line);
-    border-radius: 0;
-    background: var(--white);
-    color: var(--ink);
-    width: 100%;
-    padding: 13px 12px;
-    min-height: 44px;
-    font: 11px var(--mono);
-    box-shadow: inset 1px 1px #d8d7cc;
-  }
-  .check {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    cursor: pointer;
-    font-size: 12px;
-  }
-  .check input {
-    accent-color: var(--ink);
-    width: 15px;
-    height: 15px;
-  }
-  .help {
-    color: var(--muted);
-    font-size: 11px;
-    line-height: 1.7;
-  }
+body,
+p {
+  margin: 0;
 }
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    /* biome-ignore lint/complexity/noImportantStyles: Visibility and reduced-motion preferences must override component styles. */
-    animation: none !important;
-    /* biome-ignore lint/complexity/noImportantStyles: Visibility and reduced-motion preferences must override component styles. */
-    transition: none !important;
-    /* biome-ignore lint/complexity/noImportantStyles: Visibility and reduced-motion preferences must override component styles. */
-    scroll-behavior: auto !important;
-  }
+body {
+  background: var(--surface);
+  color: var(--ink);
+}
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+  border-radius: 0;
+}
+button,
+summary,
+select,
+input[type="checkbox"] {
+  cursor: pointer;
+}
+:focus-visible {
+  outline: 1px dotted var(--ink);
+  outline-offset: 3px;
+}
+:disabled {
+  color: var(--muted);
+  cursor: default;
+}
+[hidden] {
+  /* biome-ignore lint/complexity/noImportantStyles: Hidden controls must override component layout. */
+  display: none !important;
+}
+.nt-button {
+  border: 1px solid var(--edge-dark);
+  background: var(--control);
+  box-shadow:
+    inset 1px 1px var(--edge-light),
+    inset -1px -1px #202020;
+  padding: 8px 15px;
+  min-height: 36px;
+}
+.nt-button:hover:enabled {
+  background: #414141;
+}
+.nt-button:active:enabled {
+  box-shadow:
+    inset 1px 1px var(--edge-dark),
+    inset -1px -1px #4b4b4b;
+}
+.field,
+select {
+  min-height: 36px;
+  border: 1px solid #535353;
+  background: var(--field);
+  box-shadow: inset 1px 1px var(--edge-dark);
+  padding: 6px 9px;
+}
+.field::placeholder {
+  color: var(--muted);
+}
+input[type="checkbox"] {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  flex: 0 0 auto;
+  border: 1px solid #666666;
+  background: var(--field);
+  box-shadow: inset 1px 1px var(--edge-dark);
+  display: grid;
+  place-content: center;
+}
+input[type="checkbox"]:checked::before {
+  content: "";
+  width: 9px;
+  height: 5px;
+  border-left: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: translateY(-1px) rotate(-45deg);
+}
+.status {
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.status:empty {
+  display: none;
+}
+.status[data-error="true"] {
+  color: #ffb4ab;
 }

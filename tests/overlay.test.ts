@@ -41,37 +41,48 @@ afterEach(() => {
   document.querySelector('noble-gas-ui')?.remove();
 });
 
-test('closing or expiring a toast keeps the rewrite chip and its undo action', () => {
+test('hiding the loading bar keeps the rewrite chip and its undo action', () => {
   const ui = new Overlay();
   const undo = mock(() => {});
   const remove = ui.markRewrite(() => [], 12, undo);
-  ui.toast('Rewrite complete.');
+  ui.show('Rewriting…');
   const bar = shadow.querySelector<HTMLElement>('.bar');
-  jest.advanceTimersByTime(4_999);
   expect(bar?.hidden).toBe(false);
-  jest.advanceTimersByTime(1);
+  ui.hide();
   expect(bar?.hidden).toBe(true);
   expect(document.querySelector('noble-gas-ui')).not.toBeNull();
   expect(shadow.querySelector('.rewrite-chip')?.textContent).toContain('12 words removed');
   shadow.querySelector<HTMLButtonElement>('.rewrite-chip button')?.click();
   expect(undo).toHaveBeenCalledTimes(1);
-  ui.toast('Rewrite complete.');
-  shadow.querySelector<HTMLButtonElement>('.actions button')?.click();
-  expect(bar?.hidden).toBe(true);
-  expect(shadow.querySelector('.rewrite-chip')).not.toBeNull();
   remove();
   expect(document.querySelector('noble-gas-ui')).toBeNull();
 });
 
-test('a previous toast cannot dismiss the next rewrite', () => {
-  const ui = new Overlay();
-  ui.toast('Rewrite complete.');
-  jest.advanceTimersByTime(4_000);
-  ui.show('Rewriting…', [], true);
-  jest.advanceTimersByTime(1_000);
+test('shows loading, then finishes and undoes without a completion message', async () => {
+  const p = document.createElement('p');
+  const original = 'This is a very wordy paragraph.';
+  p.textContent = original;
+  document.body.append(p);
+  const range = document.createRange();
+  range.selectNodeContents(p);
+  window.getSelection()?.addRange(range);
+  const reply = Promise.withResolvers<Awaited<ReturnType<RewriteTransport>>>();
+  const controller = new PageController(() => reply.promise);
+  controller.activate('selection');
+  jest.advanceTimersByTime(5_000);
   expect(shadow.querySelector<HTMLElement>('.bar')?.hidden).toBe(false);
   expect(shadow.querySelector('.message')?.textContent).toBe('Rewriting…');
-  ui.hide();
+  reply.resolve({
+    output: { segments: [{ id: 's0', text: 'A short paragraph.' }] },
+    motion: false,
+  });
+  await Promise.resolve();
+  expect(p.textContent).toBe('A short paragraph.');
+  expect(shadow.querySelector<HTMLElement>('.bar')?.hidden).toBe(true);
+  expect(shadow.querySelector('.rewrite-chip')).not.toBeNull();
+  shadow.querySelector<HTMLButtonElement>('.rewrite-chip button')?.click();
+  expect(p.textContent).toBe(original);
+  expect(document.querySelector('noble-gas-ui')).toBeNull();
 });
 
 test('right-click rewrites the clicked passage, with highlighted text taking precedence', async () => {
@@ -101,5 +112,5 @@ test('right-click rewrites the clicked passage, with highlighted text taking pre
   controller.activate('context');
   expect(transport.mock.calls[1]?.[0].map(({ text }) => text).join('')).toBe(second.textContent);
   await Promise.resolve();
-  jest.advanceTimersByTime(5_000);
+  expect(shadow.querySelector<HTMLElement>('.bar')?.hidden).toBe(true);
 });

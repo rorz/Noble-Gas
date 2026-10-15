@@ -128,7 +128,7 @@ export class PageController {
   private undoLast(): void {
     const last = this.history.at(-1);
     if (!last) {
-      this.ui.toast('Nothing to undo on this page.');
+      this.ui.hide();
       return;
     }
     this.undo(last.transaction);
@@ -141,7 +141,7 @@ export class PageController {
       undoRewrite(transaction);
       const index = this.history.findIndex((entry) => entry.transaction === transaction);
       this.history.splice(index, 1)[0]?.removeMarker();
-      this.ui.toast('Original text restored.');
+      this.ui.hide();
     } catch (error) {
       this.showError(error);
     }
@@ -158,7 +158,7 @@ export class PageController {
     };
     document.addEventListener('keydown', onEscape, { signal: abort.signal });
     window.getSelection()?.removeAllRanges();
-    this.ui.show('Rewriting…', [{ label: 'Cancel · Esc', run: cancel }], true);
+    this.ui.show('Rewriting…', [{ label: 'Cancel · Esc', run: cancel }]);
     this.ui.startLoading(
       () => session.selectionRange(),
       () => session.pendingRanges(),
@@ -174,8 +174,7 @@ export class PageController {
       const byId = new Map(output.segments.map((segment) => [segment.id, segment.text]));
       if (passage.segments.every((segment) => byId.get(segment.id) === segment.text)) {
         session.rollback();
-        this.ui.clearLoading();
-        this.ui.toast('Already clear. No changes needed.');
+        this.ui.hide();
         return;
       }
       const transaction = session.commit(output);
@@ -187,12 +186,12 @@ export class PageController {
       );
       this.history.push({ transaction, removeMarker });
       if (this.history.length > 10) this.history.shift()?.removeMarker();
-      this.ui.toast('Rewrite complete.');
+      this.ui.hide();
     } catch (error) {
       session.rollback();
       this.ui.clearLoading();
       if (abort.signal.aborted) {
-        this.ui.toast('Stopped. Your original text is still here.');
+        this.ui.hide();
       } else this.showError(error);
     } finally {
       document.removeEventListener('keydown', onEscape);

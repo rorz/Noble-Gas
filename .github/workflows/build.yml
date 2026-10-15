@@ -1,0 +1,81 @@
+name: Check, build, and release
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+jobs:
+  check:
+    name: Check and package
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - name: Check release version
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          bun -e '
+            const { version } = await Bun.file("package.json").json();
+            if (process.env.RELEASE_TAG !== `v${version}`) {
+              throw new Error(`Release tag must match package.json: v${version}`);
+            }
+          '
+      - run: bun install --frozen-lockfile
+      - run: bun run check
+      - uses: actions/upload-artifact@v4
+        with:
+          name: noble-gas-chrome-${{ github.sha }}
+          path: .output/noble-gas-chrome.zip
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 30
+
+  release:
+    name: Publish release ZIP
+    needs: check
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: noble-gas-chrome-${{ github.sha }}
+          path: .output
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          cat > "$RUNNER_TEMP/release-notes.md" <<'EOF'
+          Download **noble-gas-chrome.zip** below and unzip it.
+
+          1. Open `chrome://extensions` and enable **Developer mode**.
+          2. Click **Load unpacked** and select the unzipped folder containing `manifest.json`.
+          3. Open Noble Gas and save your Google Gemini API key.
+
+          To update, replace the contents of the same folder with the new ZIP and click **Reload** in `chrome://extensions`.
+          EOF
+          gh release create "$RELEASE_TAG" .output/noble-gas-chrome.zip \
+            --verify-tag \
+            --title "Noble Gas $RELEASE_TAG" \
+            --notes-file "$RUNNER_TEMP/release-notes.md" \
+            --generate-notes

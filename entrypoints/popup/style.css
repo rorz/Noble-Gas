@@ -1,161 +1,98 @@
 body {
-  width: 390px;
+  width: 375px;
   max-height: 600px;
   overflow-y: auto;
+  border: 1px solid var(--edge-dark);
+  box-shadow:
+    inset 1px 1px var(--edge-light),
+    inset -1px -1px #171717;
   padding: 4px;
-  border: 1px solid #a5a497;
-  box-shadow: inset 1px 1px #fff;
+}
+.titlebar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 26px;
+  padding: 4px 7px;
+  background: #171717;
+  font-weight: bold;
+}
+.titlebar img {
+  display: block;
+  flex: 0 0 auto;
 }
 main {
-  padding: 20px 22px 12px;
+  display: grid;
+  gap: 18px;
+  padding: 12px;
 }
-.hero {
-  display: flex;
-  gap: 20px;
-  align-items: center;
-}
-.hero .element {
-  width: 82px;
-  height: 92px;
-}
-.hero .element-symbol {
-  font-size: 43px;
-  letter-spacing: -4px;
-}
-.hero-copy .eyebrow {
-  font-size: 8px;
-  letter-spacing: 1px;
-  margin-bottom: 12px;
-}
-h1 {
-  font-size: 26px;
-  font-weight: 400;
-  line-height: 1.08;
-  letter-spacing: -1.1px;
-}
-.intro {
-  font-size: 12px;
-  line-height: 1.5;
-  margin: 14px 0 20px;
-  color: var(--muted);
-}
-.reaction {
-  margin-top: 18px;
-}
-.reaction .btn {
+#rewrite {
   width: 100%;
-  min-height: 39px;
-  padding: 10px 14px;
-}
-.shortcut {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  color: var(--muted);
-  font: 9px var(--mono);
-  margin-top: 12px;
-}
-kbd {
-  font: 10px var(--mono);
-  border: 1px solid var(--line);
-  padding: 4px 6px;
-  box-shadow: 0 1px 0 var(--line);
-}
-.key-accordion {
-  border-top: 1px solid var(--line);
-  margin-top: 18px;
+  min-height: 45px;
+  font-weight: bold;
 }
 .rewrite-options {
   border: 0;
-  border-top: 1px solid var(--line);
-  padding: 14px 0 0;
-  margin: 18px 0 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
   display: grid;
-  gap: 12px;
+  gap: 15px;
+}
+.option-row,
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 .option-row {
-  display: flex;
-  align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  font: 11px var(--mono);
+}
+.select-control {
+  position: relative;
+  width: 138px;
+}
+.select-control select {
+  appearance: none;
+  width: 100%;
+  padding-right: 34px;
+}
+.select-control::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 13px;
+  width: 7px;
+  height: 7px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: translateY(-70%) rotate(45deg);
+  pointer-events: none;
+}
+.check-row {
   cursor: pointer;
 }
-.option-row select {
-  min-width: 106px;
-  padding: 7px 9px;
-  border: 1px solid var(--line);
-  border-radius: 0;
-  background: var(--white);
-  color: var(--ink);
-  box-shadow: inset 1px 1px #d8d7cc;
-}
-.option-row input {
-  accent-color: var(--ink);
-  width: 15px;
-  height: 15px;
-  margin: 0;
+.key-accordion {
+  border-top: 1px solid #171717;
+  box-shadow: 0 -1px #484848;
+  padding-top: 15px;
 }
 .key-accordion summary {
-  list-style: none;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  cursor: pointer;
-  font: 11px var(--mono);
-  padding: 13px 0 5px;
-}
-.key-accordion summary::-webkit-details-marker {
-  display: none;
-}
-.accordion-plus {
-  font-size: 17px;
-  font-weight: 300;
-}
-.key-accordion[open] .accordion-plus {
-  transform: rotate(45deg);
+  width: fit-content;
 }
 .key-accordion form {
-  padding-top: 16px;
-}
-.key-accordion .form-label {
-  font-size: 11px;
+  display: grid;
+  gap: 10px;
+  padding-top: 15px;
 }
 .key-row {
   display: flex;
-  gap: 7px;
+  gap: 9px;
 }
 .key-row .field {
   flex: 1;
   min-width: 0;
 }
-.key-row .nt-button {
-  padding: 10px 16px;
-}
-.key-links {
-  display: flex;
-  justify-content: space-between;
-  margin: 12px 0 8px;
-}
-:where(.key-links) .text-button {
-  font-size: 9px;
-}
-.key-accordion .help {
-  font-size: 9px;
-}
-#status {
-  margin-top: 12px;
-}
-footer {
-  border-top: 1px solid var(--line);
-  margin: 0 9px;
-  padding: 13px 4px 9px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font: 8px var(--mono);
-  color: var(--muted);
-}
-footer .text-button {
-  font-size: 8px;
+#forget-key {
+  justify-self: start;
 }

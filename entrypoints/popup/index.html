@@ -4,40 +4,26 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Noble Gas</title>
-    <link rel="icon" href="/mark.svg" />
+    <link rel="icon" type="image/png" href="/icon/32.png" />
   </head>
   <body>
-    <div class="titlebar"><span>NG — TEXT REFINERY</span><span aria-hidden="true">▧</span></div>
+    <header class="titlebar"><img src="/icon/32.png" width="16" height="16" alt="" /><span>Noble Gas</span></header>
     <main>
-      <div class="hero">
-        <div class="element" role="img" aria-label="NG, Noble Gas">
-          <div class="element-top"><span>00</span><span>4.00</span></div>
-          <div class="element-symbol">NG</div>
-          <div class="element-bottom"><span>NOBLE GAS</span><span>↗</span></div>
-        </div>
-        <div class="hero-copy"><p class="eyebrow muted">An inert intervention.</p><h1>Less noise.<br />Same substance.</h1></div>
-      </div>
-      <p class="intro">Highlight text, or click below to pick a passage.</p>
-      <div class="reaction">
-        <button type="button" id="rewrite" class="btn btn-primary" disabled><span>De-slop text</span><span aria-hidden="true">↗</span></button>
-        <p class="shortcut"><button class="text-button" id="undo" type="button">Undo last rewrite</button><kbd>⌥ ⇧ N</kbd></p>
-      </div>
+      <button type="button" id="rewrite" class="nt-button" disabled>Deslop</button>
       <fieldset class="rewrite-options" id="rewrite-options" aria-label="Rewrite options" disabled>
-        <label class="option-row" for="thinking-level"><span>Thinking level</span><select id="thinking-level"><option value="low" selected>Low</option><option value="medium">Medium</option><option value="high">High</option></select></label>
-        <label class="option-row" for="web-search"><span>Enable web search</span><input id="web-search" type="checkbox" checked /></label>
+        <label class="option-row" for="thinking-level"><span>Thinking level</span><span class="select-control"><select id="thinking-level"><option value="low" selected>Low</option><option value="medium">Medium</option><option value="high">High</option></select></span></label>
+        <label class="check-row" for="web-search"><input id="web-search" type="checkbox" checked /><span>Enable web search</span></label>
       </fieldset>
       <details class="key-accordion" id="key-accordion">
-        <summary><span id="key-label">Set API key</span><span class="accordion-plus" aria-hidden="true">+</span></summary>
+        <summary><span id="key-label">Set API key</span></summary>
         <form id="key-form">
-          <label for="api-key" class="form-label">Google Gemini API key</label>
-          <div class="key-row"><input class="field" id="api-key" type="password" placeholder="Paste your Gemini key" autocomplete="off" spellcheck="false" maxlength="512" required /><button class="nt-button" id="save-key" type="submit">Save</button></div>
-          <div class="key-links"><a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer" class="text-button">Get a Gemini key ↗</a><button type="button" id="forget-key" class="text-button" hidden>Remove key</button></div>
-          <p class="help" id="key-help">Saved on this device. Only sent to Google.</p>
+          <label for="api-key" class="form-label">Gemini API key</label>
+          <div class="key-row"><input class="field" id="api-key" type="password" placeholder="Paste your key" autocomplete="off" spellcheck="false" maxlength="512" required /><button class="nt-button" id="save-key" type="submit">Save</button></div>
+          <button type="button" id="forget-key" class="nt-button" hidden>Remove key</button>
         </form>
       </details>
       <p id="status" class="status" role="status" aria-live="polite"></p>
     </main>
-    <footer><span>ARGON 4</span></footer>
     <script type="module" src="./main.ts"></script>
   </body>
 </html>

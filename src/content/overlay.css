@@ -4,9 +4,9 @@
 .skeleton,
 .rewrite-chip {
   all: initial;
-  color-scheme: light;
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  color: #24241f;
+  color-scheme: dark;
+  font-family: Tahoma, "MS Sans Serif", Arial, sans-serif;
+  color: #eeeeee;
   font-size: 12px;
   line-height: 1.5;
 }
@@ -21,22 +21,24 @@ button {
   color: inherit;
   font: inherit;
   cursor: pointer;
-  border: 1px solid #77776d;
-  background: #eeede6;
+  border: 1px solid #101010;
+  background: #363636;
   padding: 6px 10px;
   border-radius: 0;
   box-shadow:
-    inset 1px 1px #fff,
-    inset -1px -1px #cac9c0;
+    inset 1px 1px #666666,
+    inset -1px -1px #202020;
 }
 button:hover {
-  background: #fffef6;
+  background: #414141;
 }
 button:active {
-  box-shadow: inset 1px 1px #aaa;
+  box-shadow:
+    inset 1px 1px #101010,
+    inset -1px -1px #4b4b4b;
 }
 button:focus-visible {
-  outline: 2px solid #33332b;
+  outline: 1px dotted #eeeeee;
   outline-offset: 3px;
 }
 .bar {
@@ -51,24 +53,12 @@ button:focus-visible {
   align-items: center;
   gap: 12px;
   padding: 10px 12px;
-  border: 1px solid #56564b;
-  background: #eeede7;
+  border: 1px solid #101010;
+  background: #292929;
   box-shadow:
-    3px 3px 0 #25251e30,
-    inset 1px 1px #fff;
-}
-.badge {
-  width: 31px;
-  height: 34px;
-  border: 1px solid #3f3f35;
-  display: grid;
-  place-items: center;
-  font-size: 17px;
-  font-family: Arial, sans-serif;
-  font-weight: 400;
-  flex: 0 0 auto;
-  letter-spacing: -2px;
-  padding-right: 2px;
+    2px 2px 0 #00000040,
+    inset 1px 1px #666666,
+    inset -1px -1px #171717;
 }
 .message {
   flex: 1;
@@ -83,9 +73,6 @@ button:focus-visible {
 .actions:empty {
   display: none;
 }
-.toast {
-  min-width: 0;
-}
 .rewrite-chip {
   position: fixed;
   transform: translateX(-100%);
@@ -93,9 +80,11 @@ button:focus-visible {
   align-items: center;
   pointer-events: auto;
   white-space: nowrap;
-  background: #f5f5f2;
-  border: 1px solid #62625c;
-  box-shadow: 2px 2px 0 #24241f20;
+  background: #292929;
+  border: 1px solid #101010;
+  box-shadow:
+    1px 1px 0 #00000040,
+    inset 1px 1px #666666;
   font-size: 10px;
 }
 .removed {
@@ -103,18 +92,18 @@ button:focus-visible {
 }
 .rewrite-chip button {
   border: 0;
-  border-left: 1px solid #90908a;
+  border-left: 1px solid #101010;
   padding: 3px 8px;
-  background: transparent;
+  background: #363636;
 }
 .rewrite-chip button:hover {
-  background: #fff;
+  background: #414141;
 }
 .outline {
   position: fixed;
   pointer-events: none;
-  border: 1px solid #3a3a30;
-  outline: 1px solid #fff9;
+  border: 1px solid #888888;
+  outline: 1px solid #00000040;
   outline-offset: 2px;
   background: transparent;
 }
@@ -123,8 +112,8 @@ button:focus-visible {
   content: "";
   width: 6px;
   height: 6px;
-  background: #eeede7;
-  border: 1px solid #3a3a30;
+  background: #292929;
+  border: 1px solid #888888;
   position: absolute;
 }
 .outline::before {
@@ -165,9 +154,6 @@ button:focus-visible {
   background: linear-gradient(90deg, transparent, var(--page-background), transparent);
   animation: scan 1.8s linear infinite;
 }
-.busy .badge {
-  animation: breathe 1.8s ease-in-out infinite;
-}
 @keyframes dither {
   50% {
     background-position: 1.5px 1.5px;
@@ -180,11 +166,6 @@ button:focus-visible {
   }
   to {
     transform: translateX(100%);
-  }
-}
-@keyframes breathe {
-  50% {
-    opacity: 0.35;
   }
 }
 @media (prefers-reduced-motion: reduce) {

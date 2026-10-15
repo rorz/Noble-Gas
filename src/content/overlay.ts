@@ -24,7 +24,6 @@ export class Overlay {
   private tracking: AbortController | undefined;
   private frame: number | undefined;
   private redraw: (() => void) | undefined;
-  private toastTimer: ReturnType<typeof setTimeout> | undefined;
   private markers = new Map<HTMLElement, () => void>();
 
   constructor() {
@@ -36,19 +35,16 @@ export class Overlay {
     this.message.setAttribute('role', 'status');
     this.message.setAttribute('aria-live', 'polite');
     this.bar.setAttribute('aria-label', 'Noble Gas');
-    this.bar.append(element('span', 'badge', 'NG'), this.message, this.actions);
+    this.bar.append(this.message, this.actions);
     this.skeleton.setAttribute('aria-hidden', 'true');
     this.root.append(style, this.outline, this.skeleton, this.bar);
     this.outline.hidden = true;
     this.bar.hidden = true;
   }
 
-  show(text: string, actions: Action[] = [], busy = false): void {
+  show(text: string, actions: Action[] = []): void {
     this.mount();
-    clearTimeout(this.toastTimer);
     this.bar.hidden = false;
-    this.bar.classList.remove('toast');
-    this.bar.classList.toggle('busy', busy);
     this.message.textContent = text;
     this.actions.replaceChildren();
     for (const action of actions) {
@@ -57,12 +53,6 @@ export class Overlay {
       button.addEventListener('click', action.run);
       this.actions.append(button);
     }
-  }
-
-  toast(text: string): void {
-    this.show(text, [{ label: 'Close', run: () => this.hide() }]);
-    this.bar.classList.add('toast');
-    this.toastTimer = setTimeout(() => this.hide(), 5_000);
   }
 
   markRewrite(ranges: () => Range[], removed: number, undo: () => void): () => void {
@@ -209,7 +199,6 @@ export class Overlay {
     this.updateLoading();
   }
   hide(): void {
-    clearTimeout(this.toastTimer);
     this.clearLoading();
     this.bar.hidden = true;
     this.unmountIfIdle();

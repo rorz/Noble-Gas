@@ -1,11 +1,6 @@
 import '../../src/ui/base.css';
 import './style.css';
-import {
-  type Activation,
-  errorMessage,
-  type PublicSettings,
-  settingsSchema,
-} from '../../src/shared/contracts';
+import { errorMessage, type PublicSettings, settingsSchema } from '../../src/shared/contracts';
 import { inExtension, loadSettings, send } from '../../src/ui/bridge';
 import { query, showStatus } from '../../src/ui/dom';
 
@@ -29,23 +24,23 @@ function setBusy(busy: boolean): void {
 
 function render(): void {
   query('#key-label').textContent = settings.hasKey ? 'API key saved' : 'Set API key';
-  key.placeholder = settings.hasKey ? 'Paste a replacement Gemini key' : 'Paste your Gemini key';
+  key.placeholder = settings.hasKey ? 'Paste a replacement key' : 'Paste your key';
   forget.hidden = !settings.hasKey;
   thinking.value = settings.thinkingLevel;
   webSearch.checked = settings.webSearch;
   setBusy(false);
 }
 
-async function activate(mode: Activation): Promise<void> {
+async function activate(): Promise<void> {
   if (!settings) return;
   try {
-    if (!settings.hasKey && mode !== 'undo') {
+    if (!settings.hasKey) {
       accordion.open = true;
       key.focus();
       return;
     }
     setBusy(true);
-    await send({ type: 'activate', mode });
+    await send({ type: 'activate', mode: 'auto' });
     window.close();
   } catch (error) {
     showStatus(errorMessage(error), true);
@@ -54,8 +49,7 @@ async function activate(mode: Activation): Promise<void> {
   }
 }
 
-rewrite.addEventListener('click', () => void activate('auto'));
-query('#undo').addEventListener('click', () => void activate('undo'));
+rewrite.addEventListener('click', () => void activate());
 accordion.addEventListener('toggle', () => {
   if (accordion.open) key.focus();
 });
@@ -73,7 +67,7 @@ async function savePreferences(): Promise<void> {
       }),
       rememberKey: settings.rememberKey,
     });
-    showStatus('Preferences saved.');
+    showStatus('');
   } catch (error) {
     showStatus(errorMessage(error), true);
   } finally {
@@ -98,7 +92,7 @@ query('#key-form').addEventListener('submit', async (event) => {
     });
     key.value = '';
     accordion.open = false;
-    showStatus('Gemini key saved. Ready when you are.');
+    showStatus('');
   } catch (error) {
     showStatus(errorMessage(error), true);
   } finally {
@@ -111,7 +105,7 @@ forget.addEventListener('click', async () => {
   try {
     settings = await send<PublicSettings>({ type: 'forget-key' });
     key.value = '';
-    showStatus('Key removed.');
+    showStatus('');
   } catch (error) {
     showStatus(errorMessage(error), true);
   } finally {
@@ -119,8 +113,6 @@ forget.addEventListener('click', async () => {
   }
 });
 setBusy(true);
-if (!inExtension)
-  query('#key-help').textContent = 'Preview only. Open NG in the browser toolbar to save your key.';
 void loadSettings()
   .then((value) => {
     settings = value;

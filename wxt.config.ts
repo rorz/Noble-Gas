@@ -1,8 +1,15 @@
+import { join } from 'node:path';
 import { defineConfig } from 'wxt';
 
 export default defineConfig({
   imports: false,
   manifestVersion: 3,
+  zip: { artifactTemplate: '{{name}}-{{browser}}{{modeSuffix}}.zip' },
+  hooks: {
+    'build:publicAssets': (wxt, files) => {
+      files.push({ absoluteSrc: join(wxt.config.root, 'LICENSE'), relativeDest: 'LICENSE' });
+    },
+  },
   dev: { server: { port: 3000 } },
   webExt: {
     binaries: process.env.NOBLE_GAS_BROWSER ? { chrome: process.env.NOBLE_GAS_BROWSER } : {},
@@ -10,7 +17,7 @@ export default defineConfig({
   },
   manifest: ({ command }) => ({
     name: 'Noble Gas',
-    description: 'Less noise. Same substance. Select text, remove the slop, keep the page.',
+    description: 'Rewrite selected text in place with Gemini.',
     minimum_chrome_version: '127',
     permissions: ['activeTab', 'scripting', 'storage', 'contextMenus'],
     host_permissions: ['<all_urls>'],
